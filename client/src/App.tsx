@@ -15,6 +15,7 @@ import OrdersPage from "@/pages/orders";
 import FavoritesPage from "@/pages/favorites";
 import BecomeCookPage from "@/pages/become-cook";
 import CookDashboardPage from "@/pages/cook-dashboard";
+import Dashboard from "@/pages/dashboard/Dashboard";
 import ModeratorPage from "@/pages/moderator";
 import AdminPage from "@/pages/admin";
 import { AuthModal } from "@/components/auth-modal";
@@ -88,8 +89,7 @@ function AppRouter() {
       <Route path="/orders">{() => <ProtectedRoute component={OrdersPage} />}</Route>
       <Route path="/favorites">{() => <ProtectedRoute component={FavoritesPage} />}</Route>
       <Route path="/become-cook">{() => <ProtectedRoute component={BecomeCookPage} />}</Route>
-      <Route path="/dashboard">{() => <ProtectedRoute component={CookDashboardPage} />}</Route>
-      <Route path="/dashboard/:tab">{() => <ProtectedRoute component={CookDashboardPage} />}</Route>
+      <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>
       <Route path="/moderator">{() => <ProtectedRoute component={ModeratorPage} />}</Route>
       <Route path="/admin">{() => <ProtectedRoute component={AdminPage} />}</Route>
       <Route component={NotFound} />

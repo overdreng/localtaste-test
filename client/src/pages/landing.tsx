@@ -157,12 +157,14 @@ export default function LandingPage() {
                       <Package className="h-5 w-5" />
                     </Button>
                   </Link>
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.profileImageUrl || undefined} />
-                    <AvatarFallback>
-                      {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </Avatar>
+                  <Link href="/dashboard">
+                    <Avatar className="h-8 w-8 cursor-pointer" data-testid="button-avatar-dashboard">
+                      <AvatarImage src={user?.profileImageUrl || undefined} />
+                      <AvatarFallback>
+                        {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Link>
                   <Button size="icon" variant="ghost" onClick={() => logout()} data-testid="button-logout">
                     <LogOut className="h-4 w-4" />
                   </Button>

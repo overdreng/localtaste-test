@@ -1,50 +1,26 @@
 import { useState } from "react";
+import { Sidebar, type DashboardTab } from "./Sidebar";
+import { ProfileTab } from "./ProfileTab";
+import { DishesTab } from "./DishesTab";
+import { OrdersTab } from "./OrdersTab";
+import { ReviewsTab } from "./ReviewsTab";
 
 export default function Dashboard() {
-    const [tab, setTab] = useState("profile");
+    const [activeTab, setActiveTab] = useState<DashboardTab>("profile");
 
     return (
-        <div className="flex min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-background py-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex flex-col lg:flex-row gap-6">
+                    <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-            {/* Sidebar */}
-            <div className="w-64 bg-white border-r p-6">
-                <h2 className="text-xl font-bold mb-6">Панель повара</h2>
-
-                <button
-                    onClick={() => setTab("profile")}
-                    className="block mb-3 text-left w-full"
-                >
-                    Профиль
-                </button>
-
-                <button
-                    onClick={() => setTab("dishes")}
-                    className="block mb-3 text-left w-full"
-                >
-                    Мои блюда
-                </button>
-
-                <button
-                    onClick={() => setTab("orders")}
-                    className="block mb-3 text-left w-full"
-                >
-                    Заказы
-                </button>
-
-                <button
-                    onClick={() => setTab("reviews")}
-                    className="block text-left w-full"
-                >
-                    Отзывы
-                </button>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 p-10">
-                {tab === "profile" && <div>Профиль повара</div>}
-                {tab === "dishes" && <div>Список блюд</div>}
-                {tab === "orders" && <div>Заказы</div>}
-                {tab === "reviews" && <div>Отзывы</div>}
+                    <main className="flex-1">
+                        {activeTab === "profile" && <ProfileTab />}
+                        {activeTab === "dishes" && <DishesTab />}
+                        {activeTab === "orders" && <OrdersTab />}
+                        {activeTab === "reviews" && <ReviewsTab />}
+                    </main>
+                </div>
             </div>
         </div>
     );

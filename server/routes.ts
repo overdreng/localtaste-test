@@ -463,6 +463,23 @@ export async function registerRoutes(
       res.status(500).json({ message: "Failed to get cook profile" });
     }
   });
+  app.patch("/api/cook/profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const profile = await storage.getCookProfileByUserId(userId);
+      if (!profile) return res.status(404).json({ message: "No cook profile" });
+
+      const updated = await storage.updateCookProfile(profile.id, {
+        displayName: req.body.displayName,
+        bio: req.body.bio,
+        specialization: req.body.specialization,
+      });
+
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update cook profile" });
+    }
+  });
 
   app.get("/api/cook/dishes", isAuthenticated, async (req: any, res) => {
     try {
