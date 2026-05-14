@@ -41,11 +41,26 @@ export const cookStatusEnum = pgEnum("cook_status", [
   "rejected",
 ]);
 
+export const paymentStatusEnum = pgEnum("payment_status", [
+  "pending",
+  "paid",
+  "failed",
+  "refunded",
+]);
+
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "new_order",
+  "order_status",
+  "order_confirmed",
+  "new_review",
+  "cook_approved",
+  "cook_rejected",
+  "system",
+]);
+
 export const userProfiles = pgTable("user_profiles", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id")
-    .notNull()
-    .references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
   role: userRoleEnum("role").notNull().default("client"),
   phone: varchar("phone"),
   address: text("address"),
@@ -55,9 +70,7 @@ export const userProfiles = pgTable("user_profiles", {
 
 export const cookProfiles = pgTable("cook_profiles", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id")
-    .notNull()
-    .references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
   displayName: varchar("display_name").notNull(),
   bio: text("bio"),
   specialization: varchar("specialization"),
@@ -87,9 +100,7 @@ export const categories = pgTable("categories", {
 
 export const dishes = pgTable("dishes", {
   id: serial("id").primaryKey(),
-  cookProfileId: integer("cook_profile_id")
-    .notNull()
-    .references(() => cookProfiles.id),
+  cookProfileId: integer("cook_profile_id").notNull().references(() => cookProfiles.id),
   categoryId: integer("category_id").references(() => categories.id),
   name: varchar("name").notNull(),
   description: text("description"),
@@ -113,13 +124,11 @@ export const dishes = pgTable("dishes", {
 
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
-  clientId: varchar("client_id")
-    .notNull()
-    .references(() => users.id),
-  cookProfileId: integer("cook_profile_id")
-    .notNull()
-    .references(() => cookProfiles.id),
+  clientId: varchar("client_id").notNull().references(() => users.id),
+  cookProfileId: integer("cook_profile_id").notNull().references(() => cookProfiles.id),
   status: orderStatusEnum("status").notNull().default("pending"),
+  paymentStatus: paymentStatusEnum("payment_status").notNull().default("pending"),
+  paymentMethod: varchar("payment_method").default("card"),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   deliveryAddress: text("delivery_address").notNull(),
   deliveryTime: timestamp("delivery_time"),
@@ -131,24 +140,16 @@ export const orders = pgTable("orders", {
 
 export const orderItems = pgTable("order_items", {
   id: serial("id").primaryKey(),
-  orderId: integer("order_id")
-    .notNull()
-    .references(() => orders.id),
-  dishId: integer("dish_id")
-    .notNull()
-    .references(() => dishes.id),
+  orderId: integer("order_id").notNull().references(() => orders.id),
+  dishId: integer("dish_id").notNull().references(() => dishes.id),
   quantity: integer("quantity").notNull().default(1),
   priceAtOrder: decimal("price_at_order", { precision: 10, scale: 2 }).notNull(),
 });
 
 export const reviews = pgTable("reviews", {
   id: serial("id").primaryKey(),
-  clientId: varchar("client_id")
-    .notNull()
-    .references(() => users.id),
-  cookProfileId: integer("cook_profile_id")
-    .notNull()
-    .references(() => cookProfiles.id),
+  clientId: varchar("client_id").notNull().references(() => users.id),
+  cookProfileId: integer("cook_profile_id").notNull().references(() => cookProfiles.id),
   orderId: integer("order_id").references(() => orders.id),
   dishId: integer("dish_id").references(() => dishes.id),
   rating: integer("rating").notNull(),
@@ -160,166 +161,105 @@ export const reviews = pgTable("reviews", {
 
 export const favorites = pgTable("favorites", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id")
-    .notNull()
-    .references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
   dishId: integer("dish_id").references(() => dishes.id),
   cookProfileId: integer("cook_profile_id").references(() => cookProfiles.id),
 });
 
 export const cartItems = pgTable("cart_items", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id")
-    .notNull()
-    .references(() => users.id),
-  dishId: integer("dish_id")
-    .notNull()
-    .references(() => dishes.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  dishId: integer("dish_id").notNull().references(() => dishes.id),
   quantity: integer("quantity").notNull().default(1),
 });
 
-// Relations
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  type: notificationTypeEnum("type").notNull().default("system"),
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false),
+  orderId: integer("order_id").references(() => orders.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// ─── Relations ────────────────────────────────────────────────────────────────
+
 export const usersRelations = relations(users, ({ one, many }) => ({
-  profile: one(userProfiles, {
-    fields: [users.id],
-    references: [userProfiles.userId],
-  }),
-  cookProfile: one(cookProfiles, {
-    fields: [users.id],
-    references: [cookProfiles.userId],
-  }),
+  profile: one(userProfiles, { fields: [users.id], references: [userProfiles.userId] }),
+  cookProfile: one(cookProfiles, { fields: [users.id], references: [cookProfiles.userId] }),
   orders: many(orders),
   reviews: many(reviews),
   favorites: many(favorites),
   cartItems: many(cartItems),
+  notifications: many(notifications),
 }));
 
 export const cookProfilesRelations = relations(cookProfiles, ({ one, many }) => ({
-  user: one(users, {
-    fields: [cookProfiles.userId],
-    references: [users.id],
-  }),
+  user: one(users, { fields: [cookProfiles.userId], references: [users.id] }),
   dishes: many(dishes),
   orders: many(orders),
   reviews: many(reviews),
 }));
 
 export const dishesRelations = relations(dishes, ({ one, many }) => ({
-  cookProfile: one(cookProfiles, {
-    fields: [dishes.cookProfileId],
-    references: [cookProfiles.id],
-  }),
-  category: one(categories, {
-    fields: [dishes.categoryId],
-    references: [categories.id],
-  }),
+  cookProfile: one(cookProfiles, { fields: [dishes.cookProfileId], references: [cookProfiles.id] }),
+  category: one(categories, { fields: [dishes.categoryId], references: [categories.id] }),
   orderItems: many(orderItems),
   reviews: many(reviews),
 }));
 
 export const ordersRelations = relations(orders, ({ one, many }) => ({
-  client: one(users, {
-    fields: [orders.clientId],
-    references: [users.id],
-  }),
-  cookProfile: one(cookProfiles, {
-    fields: [orders.cookProfileId],
-    references: [cookProfiles.id],
-  }),
+  client: one(users, { fields: [orders.clientId], references: [users.id] }),
+  cookProfile: one(cookProfiles, { fields: [orders.cookProfileId], references: [cookProfiles.id] }),
   items: many(orderItems),
+  notifications: many(notifications),
 }));
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
-  order: one(orders, {
-    fields: [orderItems.orderId],
-    references: [orders.id],
-  }),
-  dish: one(dishes, {
-    fields: [orderItems.dishId],
-    references: [dishes.id],
-  }),
+  order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
+  dish: one(dishes, { fields: [orderItems.dishId], references: [dishes.id] }),
 }));
 
 export const reviewsRelations = relations(reviews, ({ one }) => ({
-  client: one(users, {
-    fields: [reviews.clientId],
-    references: [users.id],
-  }),
-  cookProfile: one(cookProfiles, {
-    fields: [reviews.cookProfileId],
-    references: [cookProfiles.id],
-  }),
-  dish: one(dishes, {
-    fields: [reviews.dishId],
-    references: [dishes.id],
-  }),
-  order: one(orders, {
-    fields: [reviews.orderId],
-    references: [orders.id],
-  }),
+  client: one(users, { fields: [reviews.clientId], references: [users.id] }),
+  cookProfile: one(cookProfiles, { fields: [reviews.cookProfileId], references: [cookProfiles.id] }),
+  dish: one(dishes, { fields: [reviews.dishId], references: [dishes.id] }),
+  order: one(orders, { fields: [reviews.orderId], references: [orders.id] }),
 }));
 
 export const favoritesRelations = relations(favorites, ({ one }) => ({
-  user: one(users, {
-    fields: [favorites.userId],
-    references: [users.id],
-  }),
-  dish: one(dishes, {
-    fields: [favorites.dishId],
-    references: [dishes.id],
-  }),
-  cookProfile: one(cookProfiles, {
-    fields: [favorites.cookProfileId],
-    references: [cookProfiles.id],
-  }),
+  user: one(users, { fields: [favorites.userId], references: [users.id] }),
+  dish: one(dishes, { fields: [favorites.dishId], references: [dishes.id] }),
+  cookProfile: one(cookProfiles, { fields: [favorites.cookProfileId], references: [cookProfiles.id] }),
 }));
 
 export const cartItemsRelations = relations(cartItems, ({ one }) => ({
-  user: one(users, {
-    fields: [cartItems.userId],
-    references: [users.id],
-  }),
-  dish: one(dishes, {
-    fields: [cartItems.dishId],
-    references: [dishes.id],
-  }),
+  user: one(users, { fields: [cartItems.userId], references: [users.id] }),
+  dish: one(dishes, { fields: [cartItems.dishId], references: [dishes.id] }),
 }));
 
-// Insert schemas
-export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({
-  id: true,
-});
-export const insertCookProfileSchema = createInsertSchema(cookProfiles).omit({
-  id: true,
-  rating: true,
-  totalOrders: true,
-});
-export const insertCategorySchema = createInsertSchema(categories).omit({
-  id: true,
-});
-export const insertDishSchema = createInsertSchema(dishes).omit({
-  id: true,
-});
-export const insertOrderSchema = createInsertSchema(orders).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
-  id: true,
-});
-export const insertReviewSchema = createInsertSchema(reviews).omit({
-  id: true,
-  createdAt: true,
-});
-export const insertFavoriteSchema = createInsertSchema(favorites).omit({
-  id: true,
-});
-export const insertCartItemSchema = createInsertSchema(cartItems).omit({
-  id: true,
-});
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, { fields: [notifications.userId], references: [users.id] }),
+  order: one(orders, { fields: [notifications.orderId], references: [orders.id] }),
+}));
 
-// Types
+// ─── Insert schemas ───────────────────────────────────────────────────────────
+
+export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({ id: true });
+export const insertCookProfileSchema = createInsertSchema(cookProfiles).omit({ id: true, rating: true, totalOrders: true });
+export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
+export const insertDishSchema = createInsertSchema(dishes).omit({ id: true });
+export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
+export const insertReviewSchema = createInsertSchema(reviews).omit({ id: true, createdAt: true });
+export const insertFavoriteSchema = createInsertSchema(favorites).omit({ id: true });
+export const insertCartItemSchema = createInsertSchema(cartItems).omit({ id: true });
+export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
 export type UserProfile = typeof userProfiles.$inferSelect;
 export type InsertCookProfile = z.infer<typeof insertCookProfileSchema>;
@@ -338,3 +278,5 @@ export type InsertFavorite = z.infer<typeof insertFavoriteSchema>;
 export type Favorite = typeof favorites.$inferSelect;
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 export type CartItem = typeof cartItems.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;

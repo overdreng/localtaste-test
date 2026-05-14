@@ -9,6 +9,7 @@ import {
   reviews,
   favorites,
   cartItems,
+  notifications,
   type User,
   type UpsertUser,
   type UserProfile,
@@ -29,14 +30,19 @@ import {
   type InsertFavorite,
   type CartItem,
   type InsertCartItem,
+  type Notification,
+  type InsertNotification,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql, count } from "drizzle-orm";
+import { eq, and, desc, sql, count, gte, lte, ilike, or } from "drizzle-orm";
 
 export interface IStorage {
+  // Users
   getUserProfile(userId: string): Promise<UserProfile | undefined>;
   upsertUserProfile(data: InsertUserProfile): Promise<UserProfile>;
+  getAllUsers(): Promise<any[]>;
 
+  // Cook profiles
   getCookProfile(id: number): Promise<CookProfile | undefined>;
   getCookProfileByUserId(userId: string): Promise<CookProfile | undefined>;
   createCookProfile(data: InsertCookProfile): Promise<CookProfile>;
@@ -44,19 +50,23 @@ export interface IStorage {
   getCookProfileWithDetails(id: number): Promise<any>;
   getPendingCooks(): Promise<any[]>;
   getAllCooks(): Promise<any[]>;
+  getApprovedCooksWithPreviews(filters?: { q?: string; cuisine?: string; minRating?: string; sort?: string }): Promise<any[]>;
+  getCookStats(cookProfileId: number): Promise<any>;
 
-  getApprovedCooksWithPreviews(): Promise<any[]>;
-
+  // Categories
   getCategories(): Promise<Category[]>;
   createCategory(data: InsertCategory): Promise<Category>;
 
-  getDishes(): Promise<any[]>;
+  // Dishes
+  getDishes(filters?: { q?: string; category?: string; cuisine?: string; minPrice?: string; maxPrice?: string; sort?: string }): Promise<any[]>;
   getDish(id: number): Promise<any>;
   getDishReviews(dishId: number): Promise<any[]>;
   getDishesByCook(cookProfileId: number): Promise<Dish[]>;
   createDish(data: InsertDish): Promise<Dish>;
   updateDish(id: number, data: Partial<Dish>): Promise<Dish | undefined>;
+  deleteDish(id: number): Promise<void>;
 
+  // Cart
   getCartItems(userId: string): Promise<any[]>;
   getCartCount(userId: string): Promise<number>;
   addToCart(data: InsertCartItem): Promise<CartItem>;
@@ -64,28 +74,39 @@ export interface IStorage {
   removeCartItem(id: number): Promise<void>;
   clearCart(userId: string): Promise<void>;
 
+  // Orders
   createOrder(data: InsertOrder): Promise<Order>;
   createOrderItem(data: InsertOrderItem): Promise<OrderItem>;
   getOrdersByClient(clientId: string): Promise<any[]>;
   getOrdersByCook(cookProfileId: number): Promise<any[]>;
   updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
-  getAllOrders(): Promise<Order[]>;
+  getAllOrders(): Promise<any[]>;
 
+  // Reviews
   createReview(data: InsertReview): Promise<Review>;
   getReviewsByCook(cookProfileId: number): Promise<any[]>;
 
+  // Favorites
   getUserFavorites(userId: string): Promise<any[]>;
   toggleFavorite(userId: string, dishId: number): Promise<void>;
 
-  getStats(): Promise<{ totalUsers: number; totalCooks: number; totalOrders: number; totalRevenue: number }>;
+  // Notifications
+  createNotification(data: InsertNotification): Promise<Notification>;
+  getNotifications(userId: string): Promise<Notification[]>;
+  markNotificationRead(id: number): Promise<void>;
+  markAllNotificationsRead(userId: string): Promise<void>;
+
+  // Stats
+  getStats(): Promise<any>;
   updateCookRating(cookProfileId: number): Promise<void>;
-  getAllUsers(): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
+  // ─── Users ────────────────────────────────────────────────────────────────
+
   async getUserProfile(userId: string): Promise<UserProfile | undefined> {
     const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
-    return profile || undefined;
+    return profile;
   }
 
   async upsertUserProfile(data: InsertUserProfile): Promise<UserProfile> {
@@ -98,14 +119,33 @@ export class DatabaseStorage implements IStorage {
     return profile;
   }
 
+  async getAllUsers(): Promise<any[]> {
+    return db
+      .select({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        profileImageUrl: users.profileImageUrl,
+        createdAt: users.createdAt,
+        role: userProfiles.role,
+        phone: userProfiles.phone,
+      })
+      .from(users)
+      .leftJoin(userProfiles, eq(users.id, userProfiles.userId))
+      .orderBy(desc(users.createdAt));
+  }
+
+  // ─── Cook profiles ────────────────────────────────────────────────────────
+
   async getCookProfile(id: number): Promise<CookProfile | undefined> {
     const [profile] = await db.select().from(cookProfiles).where(eq(cookProfiles.id, id));
-    return profile || undefined;
+    return profile;
   }
 
   async getCookProfileByUserId(userId: string): Promise<CookProfile | undefined> {
     const [profile] = await db.select().from(cookProfiles).where(eq(cookProfiles.userId, userId));
-    return profile || undefined;
+    return profile;
   }
 
   async createCookProfile(data: InsertCookProfile): Promise<CookProfile> {
@@ -115,77 +155,106 @@ export class DatabaseStorage implements IStorage {
 
   async updateCookProfile(id: number, data: Partial<CookProfile>): Promise<CookProfile | undefined> {
     const [updated] = await db.update(cookProfiles).set(data).where(eq(cookProfiles.id, id)).returning();
-    return updated || undefined;
+    return updated;
   }
 
   async getCookProfileWithDetails(id: number): Promise<any> {
     const [cook] = await db.select().from(cookProfiles).where(eq(cookProfiles.id, id));
     if (!cook) return undefined;
-
     const [rawUser] = await db.select().from(users).where(eq(users.id, cook.userId));
-    const { password: _, ...user } = rawUser || {} as any;
+    const { password: _, ...user } = rawUser || ({} as any);
     const cookDishes = await db.select().from(dishes).where(and(eq(dishes.cookProfileId, id), eq(dishes.isAvailable, true)));
     const cookReviews = await this.getReviewsByCook(id);
-
-    const dishesWithCook = cookDishes.map((d) => ({ ...d, cookProfile: cook }));
-
-    return { ...cook, user, dishes: dishesWithCook, reviews: cookReviews };
+    return { ...cook, user, dishes: cookDishes.map((d) => ({ ...d, cookProfile: cook })), reviews: cookReviews };
   }
 
   async getPendingCooks(): Promise<any[]> {
     const cooks = await db.select().from(cookProfiles).where(eq(cookProfiles.status, "pending"));
-    const result = [];
-    for (const cook of cooks) {
-      const [rawUser] = await db.select().from(users).where(eq(users.id, cook.userId));
-      const { password: _, ...user } = rawUser || {} as any;
-      result.push({ ...cook, user });
-    }
-    return result;
+    return Promise.all(
+      cooks.map(async (cook) => {
+        const [rawUser] = await db.select().from(users).where(eq(users.id, cook.userId));
+        const { password: _, ...user } = rawUser || ({} as any);
+        return { ...cook, user };
+      })
+    );
   }
 
   async getAllCooks(): Promise<any[]> {
     const cooks = await db.select().from(cookProfiles).orderBy(desc(cookProfiles.id));
-    const result = [];
-    for (const cook of cooks) {
-      const [rawUser] = await db.select().from(users).where(eq(users.id, cook.userId));
-      const { password: _, ...user } = rawUser || {} as any;
-      result.push({ ...cook, user });
-    }
-    return result;
+    return Promise.all(
+      cooks.map(async (cook) => {
+        const [rawUser] = await db.select().from(users).where(eq(users.id, cook.userId));
+        const { password: _, ...user } = rawUser || ({} as any);
+        return { ...cook, user };
+      })
+    );
   }
 
-  async getApprovedCooksWithPreviews(): Promise<any[]> {
-    const cooks = await db
-      .select()
-      .from(cookProfiles)
-      .where(eq(cookProfiles.status, "approved"))
-      .orderBy(desc(cookProfiles.rating));
+  async getApprovedCooksWithPreviews(filters: { q?: string; cuisine?: string; minRating?: string; sort?: string } = {}): Promise<any[]> {
+    let query = db.select().from(cookProfiles).where(eq(cookProfiles.status, "approved")).$dynamic();
 
-    const result = [];
-    for (const cook of cooks) {
-      const [rawUser] = await db.select().from(users).where(eq(users.id, cook.userId));
-      const { password: _, ...user } = rawUser || {} as any;
-      const cookDishes = await db
-        .select()
-        .from(dishes)
-        .where(and(eq(dishes.cookProfileId, cook.id), eq(dishes.isAvailable, true)));
+    const cooks = await query.orderBy(desc(cookProfiles.rating));
 
-      const dishPreviews: string[] = [];
-      for (const d of cookDishes.slice(0, 3)) {
-        if (d.photos && d.photos.length > 0) {
-          dishPreviews.push(d.photos[0]);
-        }
-      }
+    let result = await Promise.all(
+      cooks.map(async (cook) => {
+        const [rawUser] = await db.select().from(users).where(eq(users.id, cook.userId));
+        const { password: _, ...user } = rawUser || ({} as any);
+        const cookDishes = await db.select().from(dishes).where(and(eq(dishes.cookProfileId, cook.id), eq(dishes.isAvailable, true)));
+        const dishPreviews = cookDishes.slice(0, 3).flatMap((d) => d.photos?.[0] ? [d.photos[0]] : []);
+        return { ...cook, user, dishCount: cookDishes.length, dishPreviews };
+      })
+    );
 
-      result.push({
-        ...cook,
-        user,
-        dishCount: cookDishes.length,
-        dishPreviews,
+    if (filters.q) {
+      const q = filters.q.toLowerCase();
+      result = result.filter((c) => {
+        const name = `${c.user?.firstName || ""} ${c.user?.lastName || ""} ${c.displayName}`.toLowerCase();
+        const cuisine = (c.cuisineTypes || []).join(" ").toLowerCase();
+        const spec = (c.specialization || "").toLowerCase();
+        return name.includes(q) || cuisine.includes(q) || spec.includes(q);
       });
     }
+    if (filters.cuisine) {
+      result = result.filter((c) => (c.cuisineTypes || []).includes(filters.cuisine!));
+    }
+    if (filters.minRating) {
+      const min = Number(filters.minRating);
+      result = result.filter((c) => Number(c.rating || 0) >= min);
+    }
+    if (filters.sort === "orders") {
+      result.sort((a, b) => (b.totalOrders || 0) - (a.totalOrders || 0));
+    } else if (filters.sort === "rating") {
+      result.sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
+    }
+
     return result;
   }
+
+  async getCookStats(cookProfileId: number): Promise<any> {
+    const cookOrders = await db.select().from(orders).where(eq(orders.cookProfileId, cookProfileId));
+    const totalRevenue = cookOrders
+      .filter((o) => o.status === "delivered")
+      .reduce((sum, o) => sum + Number(o.totalAmount), 0);
+    const pendingOrders = cookOrders.filter((o) => o.status === "pending" || o.status === "confirmed" || o.status === "preparing").length;
+
+    const [ratingResult] = await db
+      .select({ avg: sql<number>`coalesce(avg(rating)::numeric, 0)` })
+      .from(reviews)
+      .where(eq(reviews.cookProfileId, cookProfileId));
+
+    const reviewCount = await db.select({ count: sql<number>`count(*)::int` }).from(reviews).where(eq(reviews.cookProfileId, cookProfileId));
+
+    return {
+      totalRevenue,
+      totalOrders: cookOrders.length,
+      deliveredOrders: cookOrders.filter((o) => o.status === "delivered").length,
+      pendingOrders,
+      avgRating: Number(ratingResult?.avg || 0).toFixed(2),
+      reviewCount: reviewCount[0]?.count || 0,
+    };
+  }
+
+  // ─── Categories ───────────────────────────────────────────────────────────
 
   async getCategories(): Promise<Category[]> {
     return db.select().from(categories).orderBy(categories.sortOrder);
@@ -196,23 +265,45 @@ export class DatabaseStorage implements IStorage {
     return cat;
   }
 
-  async getDishes(): Promise<any[]> {
-    const allDishes = await db
-      .select()
-      .from(dishes)
-      .where(eq(dishes.isAvailable, true))
-      .orderBy(desc(dishes.id));
+  // ─── Dishes ───────────────────────────────────────────────────────────────
 
-    const result = [];
-    for (const dish of allDishes) {
-      const [cook] = await db.select().from(cookProfiles).where(
-        and(eq(cookProfiles.id, dish.cookProfileId), eq(cookProfiles.status, "approved"))
-      );
-      if (cook) {
-        result.push({ ...dish, cookProfile: cook });
-      }
+  async getDishes(filters: { q?: string; category?: string; cuisine?: string; minPrice?: string; maxPrice?: string; sort?: string } = {}): Promise<any[]> {
+    const allDishes = await db.select().from(dishes).where(eq(dishes.isAvailable, true)).orderBy(desc(dishes.id));
+
+    let result = (
+      await Promise.all(
+        allDishes.map(async (dish) => {
+          const [cook] = await db
+            .select()
+            .from(cookProfiles)
+            .where(and(eq(cookProfiles.id, dish.cookProfileId), eq(cookProfiles.status, "approved")));
+          return cook ? { ...dish, cookProfile: cook } : null;
+        })
+      )
+    ).filter(Boolean);
+
+    if (filters.q) {
+      const q = filters.q.toLowerCase();
+      result = result.filter((d) => d!.name.toLowerCase().includes(q) || (d!.description || "").toLowerCase().includes(q));
     }
-    return result;
+    if (filters.cuisine) {
+      result = result.filter((d) => d!.cuisineType === filters.cuisine);
+    }
+    if (filters.minPrice) {
+      result = result.filter((d) => Number(d!.price) >= Number(filters.minPrice));
+    }
+    if (filters.maxPrice) {
+      result = result.filter((d) => Number(d!.price) <= Number(filters.maxPrice));
+    }
+    if (filters.sort === "price_asc") {
+      result.sort((a, b) => Number(a!.price) - Number(b!.price));
+    } else if (filters.sort === "price_desc") {
+      result.sort((a, b) => Number(b!.price) - Number(a!.price));
+    } else if (filters.sort === "newest") {
+      result.sort((a, b) => b!.id - a!.id);
+    }
+
+    return result as any[];
   }
 
   async getDish(id: number): Promise<any> {
@@ -223,19 +314,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDishReviews(dishId: number): Promise<any[]> {
-    const dishReviews = await db
-      .select()
-      .from(reviews)
-      .where(eq(reviews.dishId, dishId))
-      .orderBy(desc(reviews.createdAt));
-
-    const result = [];
-    for (const review of dishReviews) {
-      const [rawClient] = await db.select().from(users).where(eq(users.id, review.clientId));
-      const { password: _, ...client } = rawClient || {} as any;
-      result.push({ ...review, client });
-    }
-    return result;
+    const dishReviews = await db.select().from(reviews).where(eq(reviews.dishId, dishId)).orderBy(desc(reviews.createdAt));
+    return Promise.all(
+      dishReviews.map(async (review) => {
+        const [rawClient] = await db.select().from(users).where(eq(users.id, review.clientId));
+        const { password: _, ...client } = rawClient || ({} as any);
+        return { ...review, client };
+      })
+    );
   }
 
   async getDishesByCook(cookProfileId: number): Promise<Dish[]> {
@@ -249,49 +335,43 @@ export class DatabaseStorage implements IStorage {
 
   async updateDish(id: number, data: Partial<Dish>): Promise<Dish | undefined> {
     const [updated] = await db.update(dishes).set(data).where(eq(dishes.id, id)).returning();
-    return updated || undefined;
+    return updated;
   }
+
+  async deleteDish(id: number): Promise<void> {
+    await db.update(dishes).set({ isAvailable: false }).where(eq(dishes.id, id));
+  }
+
+  // ─── Cart ─────────────────────────────────────────────────────────────────
 
   async getCartItems(userId: string): Promise<any[]> {
     const items = await db.select().from(cartItems).where(eq(cartItems.userId, userId));
-    const result = [];
-    for (const item of items) {
-      const [dish] = await db.select().from(dishes).where(eq(dishes.id, item.dishId));
-      result.push({ ...item, dish });
-    }
-    return result;
+    return Promise.all(
+      items.map(async (item) => {
+        const [dish] = await db.select().from(dishes).where(eq(dishes.id, item.dishId));
+        return { ...item, dish };
+      })
+    );
   }
 
   async getCartCount(userId: string): Promise<number> {
-    const [result] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(cartItems)
-      .where(eq(cartItems.userId, userId));
+    const [result] = await db.select({ count: sql<number>`count(*)::int` }).from(cartItems).where(eq(cartItems.userId, userId));
     return result?.count || 0;
   }
 
   async addToCart(data: InsertCartItem): Promise<CartItem> {
-    const existing = await db
-      .select()
-      .from(cartItems)
-      .where(and(eq(cartItems.userId, data.userId), eq(cartItems.dishId, data.dishId)));
-
-    if (existing.length > 0) {
-      const [updated] = await db
-        .update(cartItems)
-        .set({ quantity: existing[0].quantity + (data.quantity || 1) })
-        .where(eq(cartItems.id, existing[0].id))
-        .returning();
+    const [existing] = await db.select().from(cartItems).where(and(eq(cartItems.userId, data.userId), eq(cartItems.dishId, data.dishId)));
+    if (existing) {
+      const [updated] = await db.update(cartItems).set({ quantity: existing.quantity + (data.quantity || 1) }).where(eq(cartItems.id, existing.id)).returning();
       return updated;
     }
-
     const [item] = await db.insert(cartItems).values(data).returning();
     return item;
   }
 
   async updateCartItem(id: number, quantity: number): Promise<CartItem | undefined> {
     const [updated] = await db.update(cartItems).set({ quantity }).where(eq(cartItems.id, id)).returning();
-    return updated || undefined;
+    return updated;
   }
 
   async removeCartItem(id: number): Promise<void> {
@@ -301,6 +381,8 @@ export class DatabaseStorage implements IStorage {
   async clearCart(userId: string): Promise<void> {
     await db.delete(cartItems).where(eq(cartItems.userId, userId));
   }
+
+  // ─── Orders ───────────────────────────────────────────────────────────────
 
   async createOrder(data: InsertOrder): Promise<Order> {
     const [order] = await db.insert(orders).values(data).returning();
@@ -313,60 +395,56 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrdersByClient(clientId: string): Promise<any[]> {
-    const clientOrders = await db
-      .select()
-      .from(orders)
-      .where(eq(orders.clientId, clientId))
-      .orderBy(desc(orders.createdAt));
-
-    const result = [];
-    for (const order of clientOrders) {
-      const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
-      const itemsWithDishes = [];
-      for (const item of items) {
-        const [dish] = await db.select().from(dishes).where(eq(dishes.id, item.dishId));
-        itemsWithDishes.push({ ...item, dish });
-      }
-      const [cook] = await db.select().from(cookProfiles).where(eq(cookProfiles.id, order.cookProfileId));
-      result.push({ ...order, items: itemsWithDishes, cookProfile: cook });
-    }
-    return result;
+    const clientOrders = await db.select().from(orders).where(eq(orders.clientId, clientId)).orderBy(desc(orders.createdAt));
+    return Promise.all(
+      clientOrders.map(async (order) => {
+        const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
+        const itemsWithDishes = await Promise.all(
+          items.map(async (item) => {
+            const [dish] = await db.select().from(dishes).where(eq(dishes.id, item.dishId));
+            return { ...item, dish };
+          })
+        );
+        const [cook] = await db.select().from(cookProfiles).where(eq(cookProfiles.id, order.cookProfileId));
+        return { ...order, items: itemsWithDishes, cookProfile: cook };
+      })
+    );
   }
 
   async getOrdersByCook(cookProfileId: number): Promise<any[]> {
-    const cookOrders = await db
-      .select()
-      .from(orders)
-      .where(eq(orders.cookProfileId, cookProfileId))
-      .orderBy(desc(orders.createdAt));
-
-    const result = [];
-    for (const order of cookOrders) {
-      const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
-      const itemsWithDishes = [];
-      for (const item of items) {
-        const [dish] = await db.select().from(dishes).where(eq(dishes.id, item.dishId));
-        itemsWithDishes.push({ ...item, dish });
-      }
-      const [rawClient] = await db.select().from(users).where(eq(users.id, order.clientId));
-      const { password: _, ...client } = rawClient || {} as any;
-      result.push({ ...order, items: itemsWithDishes, client });
-    }
-    return result;
+    const cookOrders = await db.select().from(orders).where(eq(orders.cookProfileId, cookProfileId)).orderBy(desc(orders.createdAt));
+    return Promise.all(
+      cookOrders.map(async (order) => {
+        const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
+        const itemsWithDishes = await Promise.all(
+          items.map(async (item) => {
+            const [dish] = await db.select().from(dishes).where(eq(dishes.id, item.dishId));
+            return { ...item, dish };
+          })
+        );
+        const [rawClient] = await db.select().from(users).where(eq(users.id, order.clientId));
+        const { password: _, ...client } = rawClient || ({} as any);
+        return { ...order, items: itemsWithDishes, client };
+      })
+    );
   }
 
   async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
-    const [updated] = await db
-      .update(orders)
-      .set({ status: status as any, updatedAt: new Date() })
-      .where(eq(orders.id, id))
-      .returning();
-    return updated || undefined;
+    const [updated] = await db.update(orders).set({ status: status as any, updatedAt: new Date() }).where(eq(orders.id, id)).returning();
+    return updated;
   }
 
-  async getAllOrders(): Promise<Order[]> {
-    return db.select().from(orders).orderBy(desc(orders.createdAt));
+  async getAllOrders(): Promise<any[]> {
+    const allOrders = await db.select().from(orders).orderBy(desc(orders.createdAt));
+    return Promise.all(
+      allOrders.map(async (order) => {
+        const [cook] = await db.select().from(cookProfiles).where(eq(cookProfiles.id, order.cookProfileId));
+        return { ...order, cookProfile: cook };
+      })
+    );
   }
+
+  // ─── Reviews ──────────────────────────────────────────────────────────────
 
   async createReview(data: InsertReview): Promise<Review> {
     const [review] = await db.insert(reviews).values(data).returning();
@@ -375,20 +453,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getReviewsByCook(cookProfileId: number): Promise<any[]> {
-    const cookReviews = await db
-      .select()
-      .from(reviews)
-      .where(eq(reviews.cookProfileId, cookProfileId))
-      .orderBy(desc(reviews.createdAt));
-
-    const result = [];
-    for (const review of cookReviews) {
-      const [rawClient] = await db.select().from(users).where(eq(users.id, review.clientId));
-      const { password: _, ...client } = rawClient || {} as any;
-      result.push({ ...review, client });
-    }
-    return result;
+    const cookReviews = await db.select().from(reviews).where(eq(reviews.cookProfileId, cookProfileId)).orderBy(desc(reviews.createdAt));
+    return Promise.all(
+      cookReviews.map(async (review) => {
+        const [rawClient] = await db.select().from(users).where(eq(users.id, review.clientId));
+        const { password: _, ...client } = rawClient || ({} as any);
+        return { ...review, client };
+      })
+    );
   }
+
+  // ─── Favorites ────────────────────────────────────────────────────────────
 
   async getUserFavorites(userId: string): Promise<any[]> {
     const favs = await db.select().from(favorites).where(eq(favorites.userId, userId));
@@ -406,64 +481,96 @@ export class DatabaseStorage implements IStorage {
   }
 
   async toggleFavorite(userId: string, dishId: number): Promise<void> {
-    const existing = await db
-      .select()
-      .from(favorites)
-      .where(and(eq(favorites.userId, userId), eq(favorites.dishId, dishId)));
-
-    if (existing.length > 0) {
-      await db.delete(favorites).where(eq(favorites.id, existing[0].id));
+    const [existing] = await db.select().from(favorites).where(and(eq(favorites.userId, userId), eq(favorites.dishId, dishId)));
+    if (existing) {
+      await db.delete(favorites).where(eq(favorites.id, existing.id));
     } else {
       await db.insert(favorites).values({ userId, dishId });
     }
   }
 
-  async getStats() {
+  // ─── Notifications ────────────────────────────────────────────────────────
+
+  async createNotification(data: InsertNotification): Promise<Notification> {
+    const [notif] = await db.insert(notifications).values(data).returning();
+    return notif;
+  }
+
+  async getNotifications(userId: string): Promise<Notification[]> {
+    return db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt)).limit(50);
+  }
+
+  async markNotificationRead(id: number): Promise<void> {
+    await db.update(notifications).set({ isRead: true }).where(eq(notifications.id, id));
+  }
+
+  async markAllNotificationsRead(userId: string): Promise<void> {
+    await db.update(notifications).set({ isRead: true }).where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+  }
+
+  // ─── Stats ────────────────────────────────────────────────────────────────
+
+  async getStats(): Promise<any> {
     const [userCount] = await db.select({ count: sql<number>`count(*)::int` }).from(users);
-    const [cookCount] = await db.select({ count: sql<number>`count(*)::int` }).from(cookProfiles);
+    const [cookCount] = await db.select({ count: sql<number>`count(*)::int` }).from(cookProfiles).where(eq(cookProfiles.status, "approved"));
     const [orderCount] = await db.select({ count: sql<number>`count(*)::int` }).from(orders);
     const [revenueResult] = await db
       .select({ total: sql<number>`coalesce(sum(total_amount::numeric), 0)` })
       .from(orders)
       .where(eq(orders.status, "delivered"));
 
+    // Orders by status
+    const ordersByStatus = await db
+      .select({ status: orders.status, count: sql<number>`count(*)::int` })
+      .from(orders)
+      .groupBy(orders.status);
+
+    // Top dishes by order count
+    const topDishes = await db
+      .select({
+        dishId: orderItems.dishId,
+        name: dishes.name,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(orderItems)
+      .leftJoin(dishes, eq(orderItems.dishId, dishes.id))
+      .groupBy(orderItems.dishId, dishes.name)
+      .orderBy(desc(sql`count(*)`))
+      .limit(5);
+
+    // Recent orders (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentOrders = await db
+      .select({
+        date: sql<string>`date_trunc('day', created_at)::date::text`,
+        count: sql<number>`count(*)::int`,
+        revenue: sql<number>`coalesce(sum(total_amount::numeric), 0)`,
+      })
+      .from(orders)
+      .where(gte(orders.createdAt, thirtyDaysAgo))
+      .groupBy(sql`date_trunc('day', created_at)`)
+      .orderBy(sql`date_trunc('day', created_at)`);
+
     return {
       totalUsers: userCount?.count || 0,
       totalCooks: cookCount?.count || 0,
       totalOrders: orderCount?.count || 0,
       totalRevenue: Number(revenueResult?.total || 0),
+      ordersByStatus,
+      topDishes,
+      recentOrders,
     };
   }
 
   async updateCookRating(cookProfileId: number): Promise<void> {
     const [result] = await db
-      .select({ avg: sql<number>`coalesce(avg(rating), 0)` })
+      .select({ avg: sql<number>`coalesce(avg(rating)::numeric, 0)` })
       .from(reviews)
       .where(eq(reviews.cookProfileId, cookProfileId));
-
     if (result) {
-      await db
-        .update(cookProfiles)
-        .set({ rating: String(Number(result.avg).toFixed(2)) })
-        .where(eq(cookProfiles.id, cookProfileId));
+      await db.update(cookProfiles).set({ rating: String(Number(result.avg).toFixed(2)) }).where(eq(cookProfiles.id, cookProfileId));
     }
-  }
-  async getAllUsers(): Promise<any[]> {
-    const result = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        profileImageUrl: users.profileImageUrl,
-        createdAt: users.createdAt,
-        role: userProfiles.role,
-        phone: userProfiles.phone,
-      })
-      .from(users)
-      .leftJoin(userProfiles, eq(users.id, userProfiles.userId))
-      .orderBy(desc(users.createdAt));
-    return result;
   }
 }
 

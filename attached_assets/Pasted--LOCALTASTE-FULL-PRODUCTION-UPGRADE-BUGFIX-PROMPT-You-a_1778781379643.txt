@@ -1,0 +1,421 @@
+# LOCALTASTE — FULL PRODUCTION UPGRADE & BUGFIX PROMPT
+
+You are a senior full-stack architect and production engineer working on an existing project called “LocalTaste”.
+
+The project is a full-stack homemade food marketplace platform built with:
+
+- React
+- TypeScript
+- Vite
+- Express.js
+- PostgreSQL
+- Drizzle ORM
+- TailwindCSS
+- Radix UI
+- React Query
+
+The current project already includes:
+
+- authentication system;
+- user roles;
+- cook profiles;
+- dishes;
+- categories;
+- cart;
+- orders;
+- reviews;
+- favorites;
+- cook dashboard;
+- admin dashboard.
+
+Your task is NOT to rebuild the project from scratch.
+
+Your task is to:
+
+1. deeply analyze the existing codebase;
+2. preserve the current visual identity and UI style;
+3. preserve existing business logic;
+4. preserve current database structure when possible;
+5. improve architecture;
+6. fix bugs;
+7. improve UX/UI consistency;
+8. implement missing production-level features;
+9. remove ALL Replit authentication integration completely;
+10. make the project look and behave like a real production SaaS marketplace.
+
+--------------------------------------------------
+CRITICAL REQUIREMENTS
+--------------------------------------------------
+
+DO NOT:
+- redesign the entire website into another style;
+- break existing functionality;
+- replace the current stack;
+- overengineer the project with unnecessary complexity;
+- convert the project into microservices;
+- introduce breaking database changes unless absolutely required.
+
+DO:
+- preserve the current design language;
+- preserve current Tailwind styling approach;
+- preserve the current marketplace concept;
+- preserve current routing structure if possible;
+- preserve mobile responsiveness;
+- preserve current UI animations and transitions.
+
+The website currently already has a recognizable visual identity.
+All new pages/components MUST match the existing styling, spacing, typography, cards, buttons, colors, shadows, transitions, border radius, and interaction patterns.
+
+--------------------------------------------------
+STEP 1 — FULL PROJECT AUDIT
+--------------------------------------------------
+
+First perform a COMPLETE ANALYSIS of the existing project.
+
+Analyze:
+
+- folder structure;
+- API structure;
+- routes;
+- database schema;
+- React pages;
+- reusable components;
+- role system;
+- authentication system;
+- cook flows;
+- admin flows;
+- order lifecycle;
+- validation logic;
+- UI consistency;
+- responsive behavior;
+- broken interactions;
+- dead code;
+- duplicated logic;
+- security problems;
+- scalability problems;
+- performance bottlenecks.
+
+Then generate a COMPLETE REPORT containing:
+
+1. Existing functionality;
+2. Missing functionality;
+3. UI/UX inconsistencies;
+4. Broken buttons/links/interactions;
+5. Security issues;
+6. Architecture problems;
+7. Recommended improvements;
+8. Production-readiness score;
+9. Database quality review;
+10. API quality review;
+11. Frontend quality review.
+
+--------------------------------------------------
+STEP 2 — REMOVE REPLIT AUTH COMPLETELY
+--------------------------------------------------
+
+The project currently includes Replit authentication integration.
+
+REMOVE ALL REPLIT AUTH COMPLETELY.
+
+Remove:
+- Replit auth routes;
+- Replit auth middleware;
+- Replit auth providers;
+- Replit login buttons;
+- Replit session logic;
+- Replit OAuth references;
+- unused Replit packages;
+- object storage integrations tied to Replit;
+- dead auth code.
+
+The project MUST ONLY use:
+
+- local email/password authentication;
+- bcrypt password hashing;
+- express-session OR JWT auth;
+- proper secure session handling.
+
+After removal:
+- ensure registration works;
+- ensure login works;
+- ensure logout works;
+- ensure sessions work correctly;
+- ensure protected routes still work;
+- ensure role-based access still works.
+
+--------------------------------------------------
+STEP 3 — BUG FIXING & UI CONSISTENCY
+--------------------------------------------------
+
+Perform a FULL UI/UX AUDIT.
+
+Fix:
+- broken buttons;
+- broken forms;
+- invalid navigation;
+- console errors;
+- layout overflows;
+- inconsistent spacing;
+- uneven paddings/margins;
+- broken mobile responsiveness;
+- z-index issues;
+- animation glitches;
+- modal issues;
+- dropdown issues;
+- loading states;
+- empty states;
+- incorrect typography alignment;
+- inconsistent card heights;
+- broken images;
+- visual gaps between components;
+- duplicated UI blocks;
+- incorrect hover states;
+- inaccessible UI elements.
+
+The website should feel polished and consistent.
+
+--------------------------------------------------
+STEP 4 — BACKEND ARCHITECTURE IMPROVEMENT
+--------------------------------------------------
+
+The current backend architecture is too monolithic.
+
+Refactor gradually into:
+
+server/
+├── controllers/
+├── services/
+├── repositories/
+├── middlewares/
+├── validators/
+├── utils/
+├── routes/
+├── types/
+├── config/
+└── db/
+
+Move business logic OUT of route handlers.
+
+Implement:
+- service layer;
+- repository layer;
+- centralized validation;
+- centralized error handling;
+- reusable middleware;
+- cleaner API organization.
+
+DO NOT break existing APIs unless necessary.
+
+--------------------------------------------------
+STEP 5 — SECURITY IMPROVEMENTS
+--------------------------------------------------
+
+Implement production-level security.
+
+Add:
+- helmet;
+- rate limiting;
+- secure cookies;
+- environment variable validation;
+- CSRF protection if session auth is used;
+- password validation;
+- input sanitization;
+- proper auth middleware;
+- centralized authorization checks.
+
+Remove:
+- hardcoded secrets;
+- insecure configs;
+- unsafe error exposure.
+
+Add proper `.env.example`.
+
+--------------------------------------------------
+STEP 6 — PAYMENT SYSTEM
+--------------------------------------------------
+
+Implement a realistic PAYMENT SYSTEM.
+
+At minimum:
+- mock payment flow;
+- payment statuses;
+- transaction model;
+- order payment state;
+- payment history.
+
+Preferred:
+- Stripe sandbox integration.
+
+Add:
+- payment success flow;
+- payment failed flow;
+- pending payment state;
+- order-payment linkage.
+
+UI must match existing styling.
+
+--------------------------------------------------
+STEP 7 — REALTIME FEATURES
+--------------------------------------------------
+
+Implement realtime functionality.
+
+Use:
+- WebSockets
+or
+- Socket.IO.
+
+Add realtime:
+- order status updates;
+- cook dashboard updates;
+- client notifications;
+- admin notifications.
+
+The UI should update live without refresh.
+
+--------------------------------------------------
+STEP 8 — NOTIFICATION SYSTEM
+--------------------------------------------------
+
+Implement notification system.
+
+Add:
+- in-app notifications;
+- order notifications;
+- status change notifications;
+- admin moderation notifications.
+
+Notification UI must match current design language.
+
+--------------------------------------------------
+STEP 9 — ANALYTICS DASHBOARD
+--------------------------------------------------
+
+Improve admin analytics.
+
+Add:
+- total revenue;
+- total orders;
+- active cooks;
+- active users;
+- popular dishes;
+- order trends;
+- revenue charts;
+- order statistics.
+
+Use existing chart libraries if possible.
+
+--------------------------------------------------
+STEP 10 — COOK EXPERIENCE IMPROVEMENTS
+--------------------------------------------------
+
+Improve cook dashboard.
+
+Add:
+- better dish management;
+- image previews;
+- order statistics;
+- earnings overview;
+- order timeline;
+- profile completeness indicator.
+
+--------------------------------------------------
+STEP 11 — SEARCH & FILTERING
+--------------------------------------------------
+
+Implement advanced search.
+
+Add:
+- dish search;
+- cook search;
+- category filters;
+- cuisine filters;
+- price filtering;
+- sorting;
+- trending dishes;
+- recommended dishes.
+
+--------------------------------------------------
+STEP 12 — FILE STORAGE IMPROVEMENTS
+--------------------------------------------------
+
+Improve image handling.
+
+Implement:
+- image validation;
+- upload preview;
+- image optimization;
+- fallback images;
+- lazy loading.
+
+--------------------------------------------------
+STEP 13 — PRODUCTION READINESS
+--------------------------------------------------
+
+Add:
+- Dockerfile;
+- docker-compose;
+- PostgreSQL container;
+- health checks;
+- GitHub Actions CI;
+- linting;
+- type checking;
+- production build validation.
+
+--------------------------------------------------
+STEP 14 — PERFORMANCE OPTIMIZATION
+--------------------------------------------------
+
+Optimize:
+- unnecessary rerenders;
+- API calls;
+- React Query caching;
+- bundle size;
+- large components;
+- duplicated fetches.
+
+Add:
+- loading skeletons;
+- suspense-friendly loading;
+- lazy loaded pages if useful.
+
+--------------------------------------------------
+STEP 15 — FINAL RESULT EXPECTATION
+--------------------------------------------------
+
+Final result should feel like:
+
+A REAL production-ready homemade food marketplace platform.
+
+The platform should:
+- look polished;
+- feel modern;
+- have consistent UI;
+- have reliable flows;
+- have stable authentication;
+- have responsive design;
+- have production-grade architecture;
+- have scalable backend structure;
+- have realistic business logic;
+- be suitable for a university diploma project;
+- be suitable for portfolio showcase.
+
+--------------------------------------------------
+IMPORTANT FINAL RULES
+--------------------------------------------------
+
+Always:
+- preserve existing styling;
+- preserve current design language;
+- preserve current marketplace concept;
+- preserve current UX direction.
+
+Do NOT:
+- randomly redesign the website;
+- replace Tailwind;
+- replace React;
+- replace Express;
+- replace Drizzle;
+- introduce unnecessary complexity.
+
+Every improvement must feel like a natural evolution of the current LocalTaste platform.

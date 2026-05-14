@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/lib/i18n";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, ChefHat } from "lucide-react";
-import { SiReplit } from "react-icons/si";
+import { Loader2, User, ChefHat, Eye, EyeOff } from "lucide-react";
 
 type AuthMode = "login" | "register";
 
@@ -22,11 +21,15 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
   const { toast } = useToast();
   const [mode, setMode] = useState<AuthMode>(defaultMode);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     if (open) {
       setMode(defaultMode);
       setError("");
+      setShowPassword(false);
+      setShowConfirm(false);
     }
   }, [open, defaultMode]);
 
@@ -41,15 +44,9 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
   const [error, setError] = useState("");
 
   const resetForm = () => {
-    setEmail("");
-    setPassword("");
-    setConfirmPassword("");
-    setFirstName("");
-    setLastName("");
-    setPhone("");
-    setAddress("");
-    setRole("client");
-    setError("");
+    setEmail(""); setPassword(""); setConfirmPassword("");
+    setFirstName(""); setLastName(""); setPhone(""); setAddress("");
+    setRole("client"); setError("");
   };
 
   const switchMode = (newMode: AuthMode) => {
@@ -66,12 +63,10 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
       if (mode === "register") {
         if (password !== confirmPassword) {
           setError(t("passwords_dont_match"));
-          setIsLoading(false);
           return;
         }
         if (password.length < 6) {
           setError(t("password_min"));
-          setIsLoading(false);
           return;
         }
 
@@ -82,18 +77,8 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
           credentials: "include",
         });
 
-        if (res.status === 409) {
-          setError(t("email_taken"));
-          setIsLoading(false);
-          return;
-        }
-
-        if (!res.ok) {
-          const data = await res.json();
-          setError(data.message || "Registration failed");
-          setIsLoading(false);
-          return;
-        }
+        if (res.status === 409) { setError(t("email_taken")); return; }
+        if (!res.ok) { const d = await res.json(); setError(d.message || "Registration failed"); return; }
 
         toast({ title: t("registration_success") });
       } else {
@@ -104,21 +89,18 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
           credentials: "include",
         });
 
-        if (!res.ok) {
-          setError(t("login_error"));
-          setIsLoading(false);
-          return;
-        }
+        if (!res.ok) { setError(t("login_error")); return; }
       }
 
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
       resetForm();
       onOpenChange(false);
 
       if (mode === "register" && role === "cook") {
         window.location.href = "/become-cook";
       }
-    } catch (err) {
+    } catch {
       setError(mode === "login" ? t("login_error") : "Registration failed");
     } finally {
       setIsLoading(false);
@@ -169,23 +151,11 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="firstName">{t("first_name")}</Label>
-                  <Input
-                    id="firstName"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                    data-testid="input-first-name"
-                  />
+                  <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required data-testid="input-first-name" />
                 </div>
                 <div>
                   <Label htmlFor="lastName">{t("last_name")}</Label>
-                  <Input
-                    id="lastName"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    required
-                    data-testid="input-last-name"
-                  />
+                  <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required data-testid="input-last-name" />
                 </div>
               </div>
             </>
@@ -193,72 +163,74 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
 
           <div>
             <Label htmlFor="email">{t("email")}</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              data-testid="input-email"
-            />
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" data-testid="input-email" />
           </div>
 
           {mode === "register" && (
             <div>
               <Label htmlFor="phone">{t("phone")}</Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder={t("phone_placeholder")}
-                data-testid="input-phone"
-              />
+              <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t("phone_placeholder")} data-testid="input-phone" />
             </div>
           )}
 
           {mode === "register" && role === "client" && (
             <div>
               <Label htmlFor="address">{t("address")}</Label>
-              <Input
-                id="address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder={t("address_placeholder")}
-                data-testid="input-address"
-              />
+              <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t("address_placeholder")} data-testid="input-address" />
             </div>
           )}
 
           <div>
             <Label htmlFor="password">{t("password")}</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={mode === "register" ? 6 : 1}
-              data-testid="input-password"
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={mode === "register" ? 6 : 1}
+                autoComplete={mode === "login" ? "current-password" : "new-password"}
+                data-testid="input-password"
+                className="pr-9"
+              />
+              <button
+                type="button"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                onClick={() => setShowPassword((p) => !p)}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
 
           {mode === "register" && (
             <div>
               <Label htmlFor="confirmPassword">{t("confirm_password")}</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                data-testid="input-confirm-password"
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirm ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                  data-testid="input-confirm-password"
+                  className="pr-9"
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowConfirm((p) => !p)}
+                >
+                  {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
           )}
 
           {error && (
-            <p className="text-sm text-destructive" data-testid="text-auth-error">{error}</p>
+            <p className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2" data-testid="text-auth-error">{error}</p>
           )}
 
           <Button type="submit" className="w-full" disabled={isLoading} data-testid="button-auth-submit">
@@ -266,22 +238,6 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
             {mode === "login" ? t("login") : t("register")}
           </Button>
         </form>
-
-        <div className="relative my-2">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">{t("or_login_with")}</span>
-          </div>
-        </div>
-
-        <a href="/api/login" className="block">
-          <Button variant="outline" className="w-full" type="button" data-testid="button-replit-auth">
-            <SiReplit className="mr-2 h-4 w-4" />
-            {t("replit_auth")}
-          </Button>
-        </a>
 
         <p className="text-center text-sm text-muted-foreground">
           {mode === "login" ? t("dont_have_account") : t("already_have_account")}{" "}
