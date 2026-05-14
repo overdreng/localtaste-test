@@ -383,6 +383,51 @@ const translations = {
   rating_filter: { en: "Rating", ru: "Рейтинг" },
   rating_4_plus: { en: "4+ stars", ru: "4+ звёзд" },
   rating_any: { en: "Any rating", ru: "Любой рейтинг" },
+
+  // Landing stats
+  stats_orders: { en: "1,200+ Orders", ru: "1 200+ заказов" },
+  stats_cooks_label: { en: "50+ Home Cooks", ru: "50+ поваров" },
+  stats_rating_label: { en: "4.8★ Avg Rating", ru: "4.8★ средний рейтинг" },
+  stats_cuisines_label: { en: "12+ Cuisines", ru: "12+ кухонь мира" },
+
+  // Testimonials
+  testimonials_title: { en: "What Our Customers Say", ru: "Что говорят клиенты" },
+  testimonials_desc: { en: "Real experiences from our food-loving community", ru: "Реальные отзывы нашего сообщества" },
+
+  // Cook CTA section
+  cook_cta_title: { en: "Love to Cook? Start Earning Today", ru: "Любите готовить? Начните зарабатывать" },
+  cook_cta_desc: { en: "Join home cooks already earning with their passion. Set your own hours, menu and prices — cook from home.", ru: "Присоединяйтесь к домашним поварам, зарабатывающим на своём увлечении. Ваши часы, меню и цены." },
+
+  // Popular cuisines section
+  explore_cuisines: { en: "Explore Cuisines", ru: "Исследуйте кухни" },
+  explore_cuisines_desc: { en: "A world of authentic flavors from your neighborhood cooks", ru: "Мир аутентичных вкусов от поваров по соседству" },
+
+  // Trending page
+  trending_page_title: { en: "Trending This Week", ru: "В тренде на этой неделе" },
+  trending_page_desc: { en: "Discover the most popular cooks and dishes right now", ru: "Откройте самых популярных поваров и блюда прямо сейчас" },
+  top_rated_cooks: { en: "Top Rated Cooks", ru: "Лучшие повара" },
+  all_cooks_ranked: { en: "All Cooks", ru: "Все повара" },
+
+  // Cook profile premium
+  badge_verified: { en: "Verified", ru: "Проверен" },
+  badge_top_rated: { en: "Top Rated", ru: "Топ рейтинг" },
+  badge_popular: { en: "Popular", ru: "Популярный" },
+  food_gallery: { en: "Food Gallery", ru: "Галерея блюд" },
+  stat_reviews: { en: "Reviews", ru: "Отзывов" },
+  stat_dishes: { en: "Dishes", ru: "Блюд" },
+
+  // Become a cook premium
+  bc_hero_title: { en: "Turn Your Kitchen Into a Business", ru: "Превратите кухню в бизнес" },
+  bc_hero_desc: { en: "Join home cooks who earn a living doing what they love — cooking authentic meals for their community.", ru: "Присоединяйтесь к домашним поварам, которые зарабатывают, делая то, что любят — готовят для своего сообщества." },
+  bc_avg_earnings: { en: "Avg ₸45,000/month", ru: "Ср. ₸45 000/месяц" },
+  bc_free_to_join: { en: "Free to join", ru: "Бесплатная регистрация" },
+  bc_active_customers: { en: "200+ customers", ru: "200+ клиентов" },
+  bc_benefits_title: { en: "Why Cook with Us?", ru: "Почему стоит готовить с нами?" },
+  bc_benefits_desc: { en: "Everything you need to turn your passion into income", ru: "Всё, что нужно, чтобы превратить увлечение в доход" },
+  bc_how_title: { en: "How It Works for Cooks", ru: "Как это работает для поваров" },
+  bc_form_title: { en: "Apply to Become a Cook", ru: "Подать заявку на повара" },
+  bc_form_desc: { en: "Fill in the form below and our team will review your application within 24 hours.", ru: "Заполните форму ниже, и наша команда рассмотрит заявку в течение 24 часов." },
+  bc_cook_testimonials: { en: "Cooks Love It", ru: "Повара говорят" },
 } as const;
 
 type TranslationKey = keyof typeof translations;

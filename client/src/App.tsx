@@ -18,6 +18,7 @@ import CookDashboardPage from "@/pages/cook-dashboard";
 import Dashboard from "@/pages/dashboard/dashboard";
 import ModeratorPage from "@/pages/moderator";
 import AdminPage from "@/pages/admin";
+import TrendingPage from "@/pages/trending";
 import { AuthModal } from "@/components/auth-modal";
 import { useState, useEffect, useCallback, createContext, useContext } from "react";
 
@@ -84,6 +85,7 @@ function AppRouter() {
       <Route path="/" component={LandingPage} />
       <Route path="/cooks/:id" component={CookProfilePage} />
       <Route path="/dish/:id" component={DishDetailPage} />
+      <Route path="/trending" component={TrendingPage} />
       <Route path="/cart">{() => <ProtectedRoute component={CartPage} />}</Route>
       <Route path="/checkout">{() => <ProtectedRoute component={CheckoutPage} />}</Route>
       <Route path="/orders">{() => <ProtectedRoute component={OrdersPage} />}</Route>
