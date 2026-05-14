@@ -1,0 +1,653 @@
+# LOCALTASTE — ULTIMATE PRODUCTION UPGRADE MASTER PROMPT
+
+You are a senior full-stack architect, UI/UX engineer, DevOps engineer, and production SaaS consultant working on an existing platform called “LocalTaste”.
+
+LocalTaste is NOT a starter project anymore.
+
+It is a real diploma-level startup MVP platform focused on homemade food marketplaces and local cooks.
+
+The platform mission is:
+
+“Helping local home cooks promote their dishes and generate income while helping customers move away from unhealthy restaurant fast food and experience homemade meals prepared individually with care and love.”
+
+--------------------------------------------------
+CORE PROJECT STACK
+--------------------------------------------------
+
+Current stack:
+
+Frontend:
+- React
+- TypeScript
+- Vite
+- TailwindCSS
+- Radix UI
+- React Query
+- Wouter
+- Framer Motion
+
+Backend:
+- Express.js
+- TypeScript
+- PostgreSQL
+- Drizzle ORM
+- express-session
+- bcrypt
+
+--------------------------------------------------
+EXISTING FUNCTIONALITY
+--------------------------------------------------
+
+Already implemented:
+- authentication;
+- user roles;
+- dishes;
+- categories;
+- cart;
+- orders;
+- reviews;
+- favorites;
+- cook profiles;
+- cook dashboard;
+- admin panel.
+
+DO NOT REBUILD THE PROJECT.
+
+You MUST:
+- preserve existing logic;
+- preserve existing database structure whenever possible;
+- preserve existing routes whenever possible;
+- preserve styling direction;
+- preserve current visual identity.
+
+--------------------------------------------------
+CRITICAL DESIGN REQUIREMENTS
+--------------------------------------------------
+
+The platform style MUST remain:
+
+- warm;
+- modern;
+- cozy;
+- homemade;
+- food-focused;
+- local-community oriented.
+
+DO NOT convert the website into:
+- corporate SaaS;
+- fintech style;
+- futuristic dashboard-only style;
+- cold minimalism.
+
+The visual identity should feel like:
+- homemade food;
+- comfort;
+- trust;
+- warmth;
+- local community;
+- handcrafted meals.
+
+The website should feel emotionally welcoming.
+
+--------------------------------------------------
+UI/UX REQUIREMENTS
+--------------------------------------------------
+
+Preserve:
+- current Tailwind architecture;
+- current spacing system;
+- current color palette direction;
+- current animation direction;
+- current component styling;
+- current responsive behavior.
+
+Improve:
+- consistency;
+- spacing;
+- typography;
+- hover states;
+- transitions;
+- responsiveness;
+- interaction feedback;
+- skeleton loaders;
+- empty states;
+- animations.
+
+The website should feel:
+- polished;
+- premium;
+- smooth;
+- startup-quality;
+- production-ready.
+
+--------------------------------------------------
+STEP 1 — FULL CODEBASE AUDIT
+--------------------------------------------------
+
+Perform a COMPLETE project audit.
+
+Analyze:
+- frontend structure;
+- backend structure;
+- routes;
+- auth flow;
+- database schema;
+- API consistency;
+- reusable components;
+- responsive behavior;
+- role system;
+- admin flow;
+- cook flow;
+- order lifecycle;
+- broken interactions;
+- dead code;
+- duplicated code;
+- security issues;
+- architecture bottlenecks;
+- inconsistent UI;
+- performance issues.
+
+Generate a COMPLETE REPORT including:
+1. Existing functionality;
+2. Missing functionality;
+3. Broken features;
+4. UI inconsistencies;
+5. Backend architecture issues;
+6. Security problems;
+7. Scalability problems;
+8. Recommended improvements;
+9. Production-readiness score.
+
+--------------------------------------------------
+STEP 2 — REMOVE REPLIT AUTH COMPLETELY
+--------------------------------------------------
+
+REMOVE ALL Replit authentication integrations completely.
+
+Remove:
+- Replit auth;
+- Replit OAuth;
+- Replit middleware;
+- Replit login buttons;
+- Replit object storage dependencies if unused;
+- dead Replit code;
+- unused Replit packages.
+
+The ONLY authentication system should become:
+
+- local email/password authentication;
+- bcrypt hashing;
+- secure session handling.
+
+Ensure:
+- registration works;
+- login works;
+- logout works;
+- protected routes work;
+- role-based auth works.
+
+--------------------------------------------------
+STEP 3 — COMPLETE UI/UX POLISHING
+--------------------------------------------------
+
+Perform a FULL frontend quality pass.
+
+Fix:
+- broken buttons;
+- broken links;
+- console errors;
+- invalid forms;
+- bad spacing;
+- inconsistent card sizes;
+- overlapping UI;
+- mobile issues;
+- z-index issues;
+- animation glitches;
+- hover inconsistencies;
+- loading issues;
+- modal issues;
+- dropdown issues;
+- empty states;
+- broken image layouts;
+- responsiveness problems.
+
+The entire platform should feel visually unified.
+
+--------------------------------------------------
+STEP 4 — DARK MODE IMPROVEMENT
+--------------------------------------------------
+
+Preserve the SAME emotional feeling in dark mode.
+
+Dark mode should STILL feel:
+- warm;
+- cozy;
+- food-oriented;
+- welcoming.
+
+DO NOT make dark mode:
+- cold;
+- cyberpunk;
+- neon;
+- overly contrast-heavy.
+
+Use:
+- warm dark backgrounds;
+- soft shadows;
+- elegant contrast;
+- preserved food imagery quality.
+
+--------------------------------------------------
+STEP 5 — BACKEND ARCHITECTURE REFACTOR
+--------------------------------------------------
+
+Current backend is too monolithic.
+
+Gradually refactor into:
+
+server/
+├── controllers/
+├── services/
+├── repositories/
+├── middlewares/
+├── validators/
+├── utils/
+├── routes/
+├── config/
+├── db/
+└── types/
+
+Move:
+- business logic out of routes;
+- validation into validators;
+- reusable logic into services;
+- DB logic into repositories.
+
+Implement:
+- centralized error handling;
+- reusable auth middleware;
+- reusable role middleware;
+- cleaner API organization.
+
+DO NOT break working functionality.
+
+--------------------------------------------------
+STEP 6 — REALTIME ORDER TRACKING
+--------------------------------------------------
+
+Implement FULL realtime order tracking.
+
+Use:
+- Socket.IO
+or
+- WebSockets.
+
+Add live updates for:
+- order accepted;
+- preparing;
+- ready;
+- delivering;
+- delivered.
+
+Create a beautiful ORDER TRACKING PAGE.
+
+The page should include:
+- realtime status;
+- progress timeline;
+- animated progress;
+- cook notes;
+- estimated delivery time;
+- live updates without refresh.
+
+The experience should feel modern and polished.
+
+--------------------------------------------------
+STEP 7 — FULL CHAT SYSTEM
+--------------------------------------------------
+
+Implement FULL realtime messaging.
+
+Client ↔ Cook chat.
+
+Features:
+- realtime messages;
+- typing indicator;
+- unread counts;
+- image attachments;
+- timestamps;
+- conversation list;
+- responsive mobile layout.
+
+UI inspiration:
+- Telegram;
+- modern messaging apps.
+
+The design MUST still match LocalTaste branding.
+
+--------------------------------------------------
+STEP 8 — FAQ + SUPPORT SYSTEM
+--------------------------------------------------
+
+Create:
+- FAQ page;
+- Support page;
+- Help Center.
+
+FAQ should include:
+- ordering;
+- payments;
+- cook applications;
+- refunds;
+- delivery;
+- account management.
+
+If FAQ is insufficient:
+- user can open real chat support.
+
+--------------------------------------------------
+STEP 9 — PAYMENT SYSTEM (FAKE KASPI FLOW)
+--------------------------------------------------
+
+Implement a FAKE payment system for diploma/demo purposes.
+
+IMPORTANT:
+NO REAL PAYMENTS.
+
+The system should:
+- simulate Kaspi QR payments;
+- generate FAKE QR codes;
+- generate fake transaction IDs;
+- simulate payment statuses;
+- simulate successful payment flow.
+
+The QR should visually resemble Kaspi-style payment UX,
+but MUST NOT allow real payment processing.
+
+Payment statuses:
+- pending;
+- paid;
+- failed;
+- cancelled.
+
+Add:
+- payment history;
+- transaction records;
+- order-payment linkage.
+
+--------------------------------------------------
+STEP 10 — MULTILANGUAGE SYSTEM
+--------------------------------------------------
+
+The platform already has:
+- English;
+- Russian.
+
+Improve and stabilize multilingual support.
+
+Prepare architecture for:
+- Kazakh language support.
+
+Ensure:
+- proper i18n structure;
+- no hardcoded text;
+- language persistence;
+- responsive translations.
+
+--------------------------------------------------
+STEP 11 — ADVANCED LANDING PAGE
+--------------------------------------------------
+
+Create a PREMIUM cozy landing page.
+
+The landing page should emotionally communicate:
+
+- homemade food;
+- local community;
+- authentic meals;
+- food prepared with care;
+- supporting local cooks.
+
+Sections:
+- Hero section;
+- Featured dishes;
+- Top cooks;
+- How it works;
+- Why homemade food;
+- Testimonials;
+- Popular cuisines;
+- CTA become a cook;
+- Stats section;
+- FAQ preview;
+- Community-oriented messaging.
+
+The landing should feel:
+- modern;
+- warm;
+- startup-quality;
+- emotional;
+- visually rich.
+
+--------------------------------------------------
+STEP 12 — BECOME A COOK PAGE
+--------------------------------------------------
+
+Create a premium “Become a Cook” page.
+
+Messaging:
+- earn from your cooking;
+- build your own food brand;
+- cook from home;
+- monetize your passion.
+
+Add:
+- onboarding flow;
+- benefits;
+- earnings examples;
+- application form;
+- cook success stories.
+
+--------------------------------------------------
+STEP 13 — PUBLIC COOK PAGES
+--------------------------------------------------
+
+Create FULL public cook profile pages.
+
+Example URL:
+- /cook/john-doe
+
+Include:
+- avatar;
+- bio;
+- specialties;
+- cuisines;
+- ratings;
+- reviews;
+- total orders;
+- dishes;
+- gallery;
+- availability;
+- badges.
+
+The page should feel premium and personal.
+
+--------------------------------------------------
+STEP 14 — DISCOVER / TRENDING PAGES
+--------------------------------------------------
+
+Create:
+- Trending page;
+- Discover page.
+
+Include:
+- trending dishes;
+- popular cooks;
+- popular cuisines;
+- recently added dishes;
+- highest rated dishes.
+
+--------------------------------------------------
+STEP 15 — SEARCH & FILTER SYSTEM
+--------------------------------------------------
+
+Implement advanced search.
+
+Search:
+- dishes;
+- cooks;
+- cuisines;
+- categories.
+
+Filters:
+- price;
+- rating;
+- cooking time;
+- cuisine type;
+- popularity.
+
+Add sorting:
+- newest;
+- highest rated;
+- most popular;
+- cheapest.
+
+--------------------------------------------------
+STEP 16 — NOTIFICATION SYSTEM
+--------------------------------------------------
+
+Implement realtime notifications.
+
+Add:
+- order notifications;
+- payment notifications;
+- admin notifications;
+- cook notifications;
+- unread counters;
+- notification dropdown.
+
+--------------------------------------------------
+STEP 17 — ANALYTICS DASHBOARD
+--------------------------------------------------
+
+Improve admin analytics.
+
+Add:
+- total revenue;
+- orders chart;
+- active users;
+- active cooks;
+- most popular dishes;
+- revenue trends;
+- recent activity.
+
+Use existing chart libraries.
+
+--------------------------------------------------
+STEP 18 — SEO & PUBLIC PAGES
+--------------------------------------------------
+
+Create SEO-friendly pages:
+- /cooks
+- /categories
+- /cuisine/asian
+- /trending
+- /popular
+
+Improve:
+- meta tags;
+- page titles;
+- descriptions;
+- OpenGraph support.
+
+--------------------------------------------------
+STEP 19 — FILE STORAGE & IMAGES
+--------------------------------------------------
+
+Improve image system.
+
+Implement:
+- image validation;
+- image optimization;
+- lazy loading;
+- upload previews;
+- fallback images;
+- responsive image rendering.
+
+--------------------------------------------------
+STEP 20 — PRODUCTION SECURITY
+--------------------------------------------------
+
+Implement:
+- helmet;
+- rate limiting;
+- secure cookies;
+- proper env validation;
+- auth hardening;
+- sanitized inputs;
+- secure session handling.
+
+Remove:
+- hardcoded secrets;
+- unsafe configs.
+
+--------------------------------------------------
+STEP 21 — DEVOPS & DEPLOYMENT
+--------------------------------------------------
+
+Add:
+- Dockerfile;
+- docker-compose;
+- PostgreSQL container;
+- health checks;
+- GitHub Actions;
+- linting;
+- type-checking;
+- production build checks.
+
+--------------------------------------------------
+STEP 22 — MOBILE POLISH
+--------------------------------------------------
+
+Improve:
+- mobile navigation;
+- touch interactions;
+- responsive layouts;
+- bottom spacing;
+- safe areas;
+- mobile modals;
+- mobile cart UX.
+
+--------------------------------------------------
+STEP 23 — FINAL QUALITY GOAL
+--------------------------------------------------
+
+The final project should feel like:
+
+A REAL startup-quality homemade food marketplace platform.
+
+The platform should:
+- feel warm and emotional;
+- look polished;
+- feel production-ready;
+- have consistent UI;
+- have smooth realtime UX;
+- have scalable backend structure;
+- have stable authentication;
+- have realistic business logic;
+- impress during diploma defense;
+- look portfolio-worthy.
+
+--------------------------------------------------
+IMPORTANT FINAL RULES
+--------------------------------------------------
+
+DO NOT:
+- redesign the whole platform into another aesthetic;
+- remove the homemade/local feeling;
+- overengineer into unnecessary microservices;
+- break existing functionality;
+- replace core stack technologies.
+
+DO:
+- evolve the existing platform naturally;
+- preserve the LocalTaste identity;
+- make the platform look like a real modern startup.
