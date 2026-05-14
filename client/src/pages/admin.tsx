@@ -27,9 +27,12 @@ type Stats = {
   totalCooks: number;
   totalOrders: number;
   totalRevenue: number;
+  platformRevenue: number;
+  cookEarnings: number;
+  totalGMV: number;
   ordersByStatus: { status: string; count: number }[];
   topDishes: { dishId: number; name: string; count: number }[];
-  recentOrders: { date: string; count: number; revenue: number }[];
+  recentOrders: { date: string; count: number; revenue: number; commission: number }[];
 };
 
 const statusConfig: Record<string, { label: string; color: string }> = {
@@ -106,7 +109,7 @@ export default function AdminPage() {
 
       <main className="max-w-5xl mx-auto px-4 py-6">
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           <Card>
             <CardContent className="py-3 px-4 text-center">
               <Users className="h-5 w-5 mx-auto mb-1 text-blue-500" />
@@ -131,8 +134,33 @@ export default function AdminPage() {
           <Card>
             <CardContent className="py-3 px-4 text-center">
               <TrendingUp className="h-5 w-5 mx-auto mb-1 text-green-500" />
-              <p className="text-2xl font-bold">{(stats?.totalRevenue || 0).toFixed(0)} ₸</p>
-              <p className="text-xs text-muted-foreground">{t("platform_revenue")}</p>
+              <p className="text-2xl font-bold">{(stats?.totalGMV || 0).toFixed(0)} ₸</p>
+              <p className="text-xs text-muted-foreground">GMV (все заказы)</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Commission KPI Row */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/10">
+            <CardContent className="py-3 px-4 text-center">
+              <BarChart2 className="h-5 w-5 mx-auto mb-1 text-amber-600" />
+              <p className="text-xl font-bold text-amber-700 dark:text-amber-400">{(stats?.platformRevenue || 0).toFixed(0)} ₸</p>
+              <p className="text-xs text-muted-foreground">Комиссия платформы (10%)</p>
+            </CardContent>
+          </Card>
+          <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/10">
+            <CardContent className="py-3 px-4 text-center">
+              <TrendingUp className="h-5 w-5 mx-auto mb-1 text-green-600" />
+              <p className="text-xl font-bold text-green-700 dark:text-green-400">{(stats?.cookEarnings || 0).toFixed(0)} ₸</p>
+              <p className="text-xs text-muted-foreground">Заработок поваров</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="py-3 px-4 text-center">
+              <Star className="h-5 w-5 mx-auto mb-1 text-blue-500" />
+              <p className="text-xl font-bold">{(stats?.totalRevenue || 0).toFixed(0)} ₸</p>
+              <p className="text-xs text-muted-foreground">Оборот (доставлено)</p>
             </CardContent>
           </Card>
         </div>

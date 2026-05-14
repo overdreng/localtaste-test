@@ -1,0 +1,205 @@
+Before starting ANY new features from this message,
+FIRST verify that ALL previous stages from the master prompt were fully completed.
+
+If any previous systems/features are incomplete, broken, inconsistent, or partially implemented:
+- finish them first;
+- fix them first;
+- polish them first;
+- stabilize them first.
+
+DO NOT skip unfinished stages.
+
+This includes:
+- Replit auth removal
+- authentication fixes
+- UI consistency fixes
+- broken buttons/forms
+- backend architecture refactor
+- realtime order tracking
+- chat system
+- FAQ/support pages
+- fake Kaspi payment system
+- analytics
+- notifications
+- advanced search
+- multilingual improvements
+- SEO pages
+- mobile polish
+- dark mode consistency
+- Docker/CI setup
+- image handling improvements
+- all previous bugfixes and UX improvements
+
+ONLY AFTER previous stages are completed,
+continue with the following additions.
+
+--------------------------------------------------
+NEW REQUIREMENTS — MARKETPLACE POPULATION
+--------------------------------------------------
+
+The marketplace currently feels too empty.
+
+The platform must feel like:
+- a real active food marketplace;
+- a living community;
+- a startup with active users and cooks.
+
+Add MUCH MORE realistic content.
+
+--------------------------------------------------
+EXPAND COOKS
+--------------------------------------------------
+
+Add many realistic cook profiles.
+
+Each cook should have:
+- realistic name;
+- avatar;
+- biography;
+- specialties;
+- cuisine type;
+- reviews;
+- ratings;
+- dishes;
+- cooking style;
+- experience.
+
+Include:
+- homemade food cooks;
+- traditional cuisine cooks;
+- asian cuisine cooks;
+- healthy food cooks;
+- dessert specialists;
+- bakers;
+- family-style cooks.
+
+--------------------------------------------------
+EXPAND DISHES
+--------------------------------------------------
+
+Add significantly more dishes.
+
+Each dish should include:
+- realistic image;
+- detailed description;
+- ingredients;
+- calories;
+- cooking time;
+- cuisine type;
+- category;
+- reviews;
+- ratings;
+- realistic pricing.
+
+Add:
+- breakfasts;
+- soups;
+- desserts;
+- drinks;
+- traditional foods;
+- homemade meals;
+- healthy meals;
+- asian cuisine;
+- local cuisine;
+- lunch/dinner dishes.
+
+The catalog should visually feel rich and alive.
+
+--------------------------------------------------
+EXPAND REVIEWS
+--------------------------------------------------
+
+Generate realistic reviews and ratings.
+
+Include:
+- believable usernames;
+- realistic comments;
+- detailed feedback;
+- emotional homemade-food style feedback.
+
+Examples:
+- “Felt like homemade food from childhood.”
+- “Very fresh and warm meal.”
+- “Large portions and amazing taste.”
+- “Prepared with care and attention.”
+
+--------------------------------------------------
+EXPAND PLATFORM ACTIVITY
+--------------------------------------------------
+
+Add:
+- trending dishes;
+- popular cooks;
+- recent reviews;
+- recent orders;
+- recently added dishes;
+- active notifications;
+- platform activity indicators.
+
+The homepage should NEVER feel empty.
+
+--------------------------------------------------
+CHECKOUT & COMMISSION SYSTEM UPDATE
+--------------------------------------------------
+
+Implement a realistic marketplace commission model.
+
+Platform fee:
+- 10% commission from every order
+- fixed delivery fee: 299 ₸
+
+At checkout/payment page,
+show detailed price breakdown.
+
+Example:
+
+Burger ................ 2000 ₸
+Platform fee (10%) .... +200 ₸
+Delivery .............. +299 ₸
+
+TOTAL ................. 2499 ₸
+
+Requirements:
+- calculate platform fee dynamically;
+- calculate final total automatically;
+- clearly show:
+  - subtotal
+  - platform fee
+  - delivery fee
+  - final amount
+
+Save in database:
+- subtotal
+- platform_fee
+- delivery_fee
+- total_amount
+
+Also:
+- add platform revenue analytics;
+- add cook earnings calculation;
+- show cook net earnings after commission.
+
+The checkout/payment experience should visually resemble:
+- Kaspi
+- Glovo
+- Wolt
+
+BUT:
+NO REAL PAYMENTS.
+ONLY simulated/fake Kaspi QR flow.
+
+--------------------------------------------------
+FINAL GOAL
+--------------------------------------------------
+
+The final LocalTaste platform should feel like:
+
+A polished, active, startup-grade homemade food marketplace platform with:
+- realistic marketplace activity;
+- rich content;
+- modern UX;
+- realtime systems;
+- polished UI;
+- scalable architecture;
+- production-level quality;
+- strong diploma presentation quality.

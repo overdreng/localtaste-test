@@ -6,20 +6,23 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft, ShoppingCart, MapPin, Clock, MessageSquare,
-  CreditCard, Banknote, CheckCircle2, Loader2,
+  CreditCard, Banknote, CheckCircle2, Loader2, QrCode, Smartphone,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "@/lib/i18n";
 import type { CartItem, Dish } from "@shared/schema";
 
 type CartItemWithDish = CartItem & { dish: Dish };
-type PaymentMethod = "card" | "cash";
-
+type PaymentMethod = "card" | "cash" | "kaspi";
 type CheckoutStep = "details" | "payment" | "processing" | "success";
+
+const PLATFORM_FEE_RATE = 0.10;
+const DELIVERY_FEE = 299;
 
 export default function CheckoutPage() {
   const { toast } = useToast();
@@ -35,8 +38,15 @@ export default function CheckoutPage() {
   const [cardNumber, setCardNumber] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvv, setCardCvv] = useState("");
+  const [kaspiPhone, setKaspiPhone] = useState("");
+  const [kaspiConfirmed, setKaspiConfirmed] = useState(false);
 
   const { data: cartItems, isLoading } = useQuery<CartItemWithDish[]>({ queryKey: ["/api/cart"] });
+
+  const subtotal = cartItems?.reduce((sum, item) => sum + Number(item.dish.price) * item.quantity, 0) || 0;
+  const platformFee = Math.round(subtotal * PLATFORM_FEE_RATE);
+  const deliveryFee = subtotal > 0 ? DELIVERY_FEE : 0;
+  const grandTotal = subtotal + platformFee + deliveryFee;
 
   const placeOrder = useMutation({
     mutationFn: () =>
@@ -53,8 +63,6 @@ export default function CheckoutPage() {
     },
   });
 
-  const total = cartItems?.reduce((sum, item) => sum + Number(item.dish.price) * item.quantity, 0) || 0;
-
   const formatCardNumber = (val: string) => {
     const digits = val.replace(/\D/g, "").slice(0, 16);
     return digits.replace(/(.{4})/g, "$1 ").trim();
@@ -66,16 +74,26 @@ export default function CheckoutPage() {
     return digits;
   };
 
+  const formatPhone = (val: string) => {
+    const digits = val.replace(/\D/g, "").slice(0, 11);
+    if (digits.startsWith("7") && digits.length > 1) {
+      return "+" + digits;
+    }
+    return digits ? "+" + digits : "";
+  };
+
   const handlePayment = () => {
     if (paymentMethod === "card") {
       const digits = cardNumber.replace(/\s/g, "");
-      if (digits.length !== 16) { toast({ title: "Please enter a valid 16-digit card number", variant: "destructive" }); return; }
-      if (cardExpiry.length !== 5) { toast({ title: "Please enter a valid expiry date (MM/YY)", variant: "destructive" }); return; }
-      if (cardCvv.length < 3) { toast({ title: "Please enter a valid CVV", variant: "destructive" }); return; }
+      if (digits.length !== 16) { toast({ title: "Введите корректный номер карты (16 цифр)", variant: "destructive" }); return; }
+      if (cardExpiry.length !== 5) { toast({ title: "Введите срок действия (ММ/ГГ)", variant: "destructive" }); return; }
+      if (cardCvv.length < 3) { toast({ title: "Введите CVV код", variant: "destructive" }); return; }
+    }
+    if (paymentMethod === "kaspi") {
+      if (!kaspiConfirmed) { toast({ title: "Подтвердите оплату в Kaspi", variant: "destructive" }); return; }
     }
     setStep("processing");
-    // Simulate payment processing delay
-    setTimeout(() => placeOrder.mutate(), 1500);
+    setTimeout(() => placeOrder.mutate(), paymentMethod === "kaspi" ? 2000 : 1500);
   };
 
   if (isLoading) {
@@ -89,12 +107,16 @@ export default function CheckoutPage() {
     );
   }
 
-  if (!cartItems || cartItems.length === 0) {
-    navigate("/cart");
+  useEffect(() => {
+    if (!isLoading && cartItems && cartItems.length === 0 && step !== "success") {
+      navigate("/cart");
+    }
+  }, [isLoading, cartItems, step, navigate]);
+
+  if (!isLoading && (!cartItems || cartItems.length === 0) && step !== "success") {
     return null;
   }
 
-  // Success screen
   if (step === "success") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -102,24 +124,50 @@ export default function CheckoutPage() {
           <div className="h-20 w-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="h-10 w-10 text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Order Placed!</h2>
-          <p className="text-muted-foreground mb-2">Your order has been placed successfully.</p>
-          {paymentMethod === "card" && (
-            <Badge variant="outline" className="mb-6">
-              <CreditCard className="h-3 w-3 mr-1" /> Payment confirmed
-            </Badge>
-          )}
-          {paymentMethod === "cash" && (
-            <Badge variant="outline" className="mb-6">
-              <Banknote className="h-3 w-3 mr-1" /> Pay on delivery
-            </Badge>
-          )}
+          <h2 className="text-2xl font-bold mb-2">Заказ оформлен!</h2>
+          <p className="text-muted-foreground mb-3">Ваш заказ принят и передан повару.</p>
+          <div className="bg-muted/50 rounded-xl p-4 mb-6 text-sm text-left space-y-1.5">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Сумма заказа</span>
+              <span>{subtotal.toFixed(0)} ₸</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Комиссия платформы</span>
+              <span>{platformFee.toFixed(0)} ₸</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Доставка</span>
+              <span>{deliveryFee.toFixed(0)} ₸</span>
+            </div>
+            <Separator className="my-1" />
+            <div className="flex justify-between font-bold">
+              <span>Итого оплачено</span>
+              <span className="text-primary">{grandTotal.toFixed(0)} ₸</span>
+            </div>
+          </div>
+          <div className="flex gap-2 mb-4 justify-center">
+            {paymentMethod === "card" && (
+              <Badge variant="outline" className="gap-1">
+                <CreditCard className="h-3 w-3" /> Карта — оплачено
+              </Badge>
+            )}
+            {paymentMethod === "kaspi" && (
+              <Badge variant="outline" className="gap-1 text-amber-600 border-amber-300">
+                <Smartphone className="h-3 w-3" /> Kaspi — оплачено
+              </Badge>
+            )}
+            {paymentMethod === "cash" && (
+              <Badge variant="outline" className="gap-1">
+                <Banknote className="h-3 w-3" /> Наличные при доставке
+              </Badge>
+            )}
+          </div>
           <div className="flex gap-3 flex-col">
             <Button onClick={() => navigate("/orders")} data-testid="button-view-orders">
-              Track My Order
+              Отслеживать заказ
             </Button>
             <Button variant="outline" onClick={() => navigate("/")}>
-              Continue Shopping
+              Продолжить покупки
             </Button>
           </div>
         </div>
@@ -127,14 +175,21 @@ export default function CheckoutPage() {
     );
   }
 
-  // Processing screen
   if (step === "processing") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin text-primary" />
-          <h2 className="text-lg font-semibold mb-1">Processing payment…</h2>
-          <p className="text-sm text-muted-foreground">Please wait a moment</p>
+          {paymentMethod === "kaspi" ? (
+            <div className="h-14 w-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+              <Smartphone className="h-7 w-7 text-amber-600 animate-pulse" />
+            </div>
+          ) : (
+            <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin text-primary" />
+          )}
+          <h2 className="text-lg font-semibold mb-1">
+            {paymentMethod === "kaspi" ? "Kaspi подтверждает оплату…" : "Обработка платежа…"}
+          </h2>
+          <p className="text-sm text-muted-foreground">Пожалуйста, подождите</p>
         </div>
       </div>
     );
@@ -155,24 +210,24 @@ export default function CheckoutPage() {
               </Button>
             </Link>
           )}
-          <h1 className="font-semibold">{step === "payment" ? "Payment" : t("checkout")}</h1>
+          <h1 className="font-semibold">{step === "payment" ? "Оплата" : t("checkout")}</h1>
           <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
-            <span className={step === "details" ? "text-primary font-medium" : ""}>1. Details</span>
+            <span className={step === "details" ? "text-primary font-medium" : ""}>1. Детали</span>
             <span>→</span>
-            <span className={step === "payment" ? "text-primary font-medium" : ""}>2. Payment</span>
+            <span className={step === "payment" ? "text-primary font-medium" : ""}>2. Оплата</span>
           </div>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6">
-        {/* Order summary — always visible */}
+        {/* Order summary */}
         <Card className="mb-6">
           <CardContent className="py-4 px-4">
             <h3 className="font-medium text-sm mb-3 flex items-center gap-2">
               <ShoppingCart className="h-4 w-4" />
               {t("order_summary")}
             </h3>
-            <div className="space-y-2">
+            <div className="space-y-2 mb-3">
               {cartItems.map((item) => (
                 <div key={item.id} className="flex items-center justify-between text-sm" data-testid={`checkout-item-${item.id}`}>
                   <div className="flex items-center gap-2 min-w-0">
@@ -187,9 +242,26 @@ export default function CheckoutPage() {
                 </div>
               ))}
             </div>
-            <div className="flex items-center justify-between pt-3 mt-3 border-t">
-              <span className="font-medium">{t("total")}</span>
-              <span className="text-xl font-bold" data-testid="text-checkout-total">{total.toFixed(0)} ₸</span>
+
+            {/* Price breakdown */}
+            <div className="bg-muted/40 rounded-xl p-3 space-y-2 text-sm">
+              <div className="flex justify-between text-muted-foreground">
+                <span>Сумма блюд</span>
+                <span>{subtotal.toFixed(0)} ₸</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
+                <span>Комиссия платформы (10%)</span>
+                <span>+{platformFee.toFixed(0)} ₸</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
+                <span>Доставка</span>
+                <span>+{deliveryFee.toFixed(0)} ₸</span>
+              </div>
+              <Separator />
+              <div className="flex justify-between font-bold text-base">
+                <span>{t("total")}</span>
+                <span className="text-primary" data-testid="text-checkout-total">{grandTotal.toFixed(0)} ₸</span>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -246,7 +318,7 @@ export default function CheckoutPage() {
               disabled={!deliveryAddress.trim()}
               data-testid="button-continue-payment"
             >
-              Continue to Payment — {total.toFixed(0)} ₸
+              Перейти к оплате — {grandTotal.toFixed(0)} ₸
             </Button>
           </>
         )}
@@ -256,39 +328,51 @@ export default function CheckoutPage() {
             {/* Payment method selector */}
             <Card className="mb-4">
               <CardContent className="py-4 px-4">
-                <p className="text-sm font-medium mb-3">Payment Method</p>
-                <div className="grid grid-cols-2 gap-3">
+                <p className="text-sm font-medium mb-3">Способ оплаты</p>
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("card")}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-colors ${paymentMethod === "card" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}
+                    className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${paymentMethod === "card" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}
                     data-testid="button-pay-card"
                   >
-                    <CreditCard className={`h-6 w-6 ${paymentMethod === "card" ? "text-primary" : "text-muted-foreground"}`} />
-                    <span className="text-sm font-medium">Card</span>
+                    <CreditCard className={`h-5 w-5 ${paymentMethod === "card" ? "text-primary" : "text-muted-foreground"}`} />
+                    <span className="text-xs font-medium">Карта</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setPaymentMethod("kaspi"); setKaspiConfirmed(false); }}
+                    className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${paymentMethod === "kaspi" ? "border-amber-400 bg-amber-50 dark:bg-amber-950/20" : "border-border hover:border-muted-foreground/30"}`}
+                    data-testid="button-pay-kaspi"
+                  >
+                    <div className={`h-5 w-5 flex items-center justify-center ${paymentMethod === "kaspi" ? "text-amber-600" : "text-muted-foreground"}`}>
+                      <Smartphone className="h-5 w-5" />
+                    </div>
+                    <span className={`text-xs font-medium ${paymentMethod === "kaspi" ? "text-amber-700" : ""}`}>Kaspi QR</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("cash")}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-colors ${paymentMethod === "cash" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}
+                    className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${paymentMethod === "cash" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"}`}
                     data-testid="button-pay-cash"
                   >
-                    <Banknote className={`h-6 w-6 ${paymentMethod === "cash" ? "text-primary" : "text-muted-foreground"}`} />
-                    <span className="text-sm font-medium">Cash</span>
+                    <Banknote className={`h-5 w-5 ${paymentMethod === "cash" ? "text-primary" : "text-muted-foreground"}`} />
+                    <span className="text-xs font-medium">Наличные</span>
                   </button>
                 </div>
               </CardContent>
             </Card>
 
+            {/* Card payment form */}
             {paymentMethod === "card" && (
               <Card className="mb-6">
                 <CardContent className="py-4 px-4 space-y-4">
                   <p className="text-sm font-medium flex items-center gap-2">
                     <CreditCard className="h-4 w-4" />
-                    Card Details
+                    Данные карты
                   </p>
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Card Number</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">Номер карты</label>
                     <Input
                       placeholder="1234 5678 9012 3456"
                       value={cardNumber}
@@ -299,9 +383,9 @@ export default function CheckoutPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">Expiry Date</label>
+                      <label className="text-xs text-muted-foreground mb-1 block">Срок действия</label>
                       <Input
-                        placeholder="MM/YY"
+                        placeholder="ММ/ГГ"
                         value={cardExpiry}
                         onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
                         maxLength={5}
@@ -321,21 +405,89 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    🔒 This is a demo payment flow. No real charges are made.
+                    🔒 Демонстрационная оплата. Реальных списаний не происходит.
                   </p>
                 </CardContent>
               </Card>
             )}
 
+            {/* Kaspi QR payment */}
+            {paymentMethod === "kaspi" && (
+              <Card className="mb-6 border-amber-200 dark:border-amber-800">
+                <CardContent className="py-4 px-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="h-8 w-8 rounded-lg bg-amber-500 flex items-center justify-center">
+                      <QrCode className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">Kaspi QR</p>
+                      <p className="text-xs text-muted-foreground">Оплатите через приложение Kaspi.kz</p>
+                    </div>
+                  </div>
+
+                  {/* Fake QR Code */}
+                  <div className="flex justify-center mb-4">
+                    <div className="relative">
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=kaspi://pay?amount=${grandTotal}&merchant=LocalTaste&order=LT${Date.now()}`}
+                        alt="Kaspi QR Code"
+                        className="rounded-xl border-4 border-amber-100 dark:border-amber-900"
+                        width={160}
+                        height={160}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="h-8 w-8 bg-white rounded-md flex items-center justify-center shadow">
+                          <span className="text-amber-600 font-black text-xs">K</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-center mb-4">
+                    <p className="text-xl font-bold text-amber-600">{grandTotal.toFixed(0)} ₸</p>
+                    <p className="text-xs text-muted-foreground mt-1">Сканируйте QR-код в приложении Kaspi.kz</p>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="text-xs text-muted-foreground mb-1 block">Ваш номер телефона Kaspi</label>
+                    <Input
+                      placeholder="+7 777 123 45 67"
+                      value={kaspiPhone}
+                      onChange={(e) => setKaspiPhone(formatPhone(e.target.value))}
+                      maxLength={12}
+                      data-testid="input-kaspi-phone"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setKaspiConfirmed(!kaspiConfirmed)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${kaspiConfirmed ? "border-amber-400 bg-amber-50 dark:bg-amber-950/20" : "border-border"}`}
+                    data-testid="button-kaspi-confirm"
+                  >
+                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${kaspiConfirmed ? "border-amber-500 bg-amber-500" : "border-muted-foreground"}`}>
+                      {kaspiConfirmed && <CheckCircle2 className="h-3 w-3 text-white" />}
+                    </div>
+                    <span className="text-sm">Я подтверждаю оплату {grandTotal.toFixed(0)} ₸ через Kaspi</span>
+                  </button>
+
+                  <p className="text-xs text-center text-muted-foreground mt-3">
+                    🔒 Демонстрационная оплата. Реальных списаний не происходит.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Cash payment info */}
             {paymentMethod === "cash" && (
               <Card className="mb-6">
                 <CardContent className="py-4 px-4">
                   <div className="flex items-start gap-3">
                     <Banknote className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium">Pay on Delivery</p>
+                      <p className="text-sm font-medium">Оплата наличными</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Prepare <strong>{total.toFixed(0)} ₸</strong> in cash. The courier will collect payment upon delivery.
+                        Подготовьте <strong>{grandTotal.toFixed(0)} ₸</strong> наличными. Курьер примет оплату при доставке.
                       </p>
                     </div>
                   </div>
@@ -349,7 +501,9 @@ export default function CheckoutPage() {
               onClick={handlePayment}
               data-testid="button-place-order"
             >
-              {paymentMethod === "card" ? `Pay ${total.toFixed(0)} ₸` : `Place Order — ${total.toFixed(0)} ₸`}
+              {paymentMethod === "card" && `Оплатить ${grandTotal.toFixed(0)} ₸`}
+              {paymentMethod === "kaspi" && `Подтвердить оплату Kaspi — ${grandTotal.toFixed(0)} ₸`}
+              {paymentMethod === "cash" && `Оформить заказ — ${grandTotal.toFixed(0)} ₸`}
             </Button>
           </>
         )}

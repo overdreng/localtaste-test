@@ -519,6 +519,23 @@ export class DatabaseStorage implements IStorage {
       .from(orders)
       .where(eq(orders.status, "delivered"));
 
+    // Platform commission revenue (from all paid orders)
+    const [platformFeeResult] = await db
+      .select({ total: sql<number>`coalesce(sum(platform_fee::numeric), 0)` })
+      .from(orders)
+      .where(eq(orders.paymentStatus, "paid"));
+
+    // Cook earnings (subtotal from delivered orders = what cooks earn after fee)
+    const [cookEarningsResult] = await db
+      .select({ total: sql<number>`coalesce(sum(subtotal::numeric), 0)` })
+      .from(orders)
+      .where(eq(orders.status, "delivered"));
+
+    // Total GMV (gross merchandise value = all order totals)
+    const [gmvResult] = await db
+      .select({ total: sql<number>`coalesce(sum(total_amount::numeric), 0)` })
+      .from(orders);
+
     // Orders by status
     const ordersByStatus = await db
       .select({ status: orders.status, count: sql<number>`count(*)::int` })
@@ -546,6 +563,7 @@ export class DatabaseStorage implements IStorage {
         date: sql<string>`date_trunc('day', created_at)::date::text`,
         count: sql<number>`count(*)::int`,
         revenue: sql<number>`coalesce(sum(total_amount::numeric), 0)`,
+        commission: sql<number>`coalesce(sum(platform_fee::numeric), 0)`,
       })
       .from(orders)
       .where(gte(orders.createdAt, thirtyDaysAgo))
@@ -557,6 +575,9 @@ export class DatabaseStorage implements IStorage {
       totalCooks: cookCount?.count || 0,
       totalOrders: orderCount?.count || 0,
       totalRevenue: Number(revenueResult?.total || 0),
+      platformRevenue: Number(platformFeeResult?.total || 0),
+      cookEarnings: Number(cookEarningsResult?.total || 0),
+      totalGMV: Number(gmvResult?.total || 0),
       ordersByStatus,
       topDishes,
       recentOrders,

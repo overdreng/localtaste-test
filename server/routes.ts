@@ -276,7 +276,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     deliveryAddress: z.string().min(1, "Delivery address is required"),
     deliveryTime: z.string().optional(),
     comment: z.string().optional(),
-    paymentMethod: z.enum(["card", "cash"]).default("card"),
+    paymentMethod: z.enum(["card", "cash", "kaspi"]).default("card"),
   });
 
   app.post("/api/orders", isAuthenticated, async (req: any, res) => {
@@ -297,11 +297,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       const createdOrders = [];
       for (const [cookId, items] of Object.entries(byCook)) {
-        const total = items.reduce((sum: number, item: any) => sum + Number(item.dish.price) * item.quantity, 0);
+        const subtotal = items.reduce((sum: number, item: any) => sum + Number(item.dish.price) * item.quantity, 0);
+        const platformFee = Math.round(subtotal * 0.10);
+        const deliveryFee = 299;
+        const totalAmount = subtotal + platformFee + deliveryFee;
         const order = await storage.createOrder({
           clientId: userId,
           cookProfileId: Number(cookId),
-          totalAmount: String(total),
+          subtotal: String(subtotal),
+          platformFee: String(platformFee),
+          deliveryFee: String(deliveryFee),
+          totalAmount: String(totalAmount),
           deliveryAddress: parsed.data.deliveryAddress,
           deliveryTime: (() => {
             if (!parsed.data.deliveryTime) return undefined;
@@ -311,7 +317,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           comment: parsed.data.comment,
           status: "pending",
           paymentMethod: parsed.data.paymentMethod,
-          paymentStatus: parsed.data.paymentMethod === "card" ? "paid" : "pending",
+          paymentStatus: parsed.data.paymentMethod === "card" || parsed.data.paymentMethod === "kaspi" ? "paid" : "pending",
         });
 
         for (const item of items) {
