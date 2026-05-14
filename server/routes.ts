@@ -303,7 +303,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           cookProfileId: Number(cookId),
           totalAmount: String(total),
           deliveryAddress: parsed.data.deliveryAddress,
-          deliveryTime: parsed.data.deliveryTime ? new Date(parsed.data.deliveryTime) : undefined,
+          deliveryTime: (() => {
+            if (!parsed.data.deliveryTime) return undefined;
+            const d = new Date(parsed.data.deliveryTime);
+            return isNaN(d.getTime()) ? undefined : d;
+          })(),
           comment: parsed.data.comment,
           status: "pending",
           paymentMethod: parsed.data.paymentMethod,
