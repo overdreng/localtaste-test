@@ -15,7 +15,7 @@ import OrdersPage from "@/pages/orders";
 import FavoritesPage from "@/pages/favorites";
 import BecomeCookPage from "@/pages/become-cook";
 import CookDashboardPage from "@/pages/cook-dashboard";
-import Dashboard from "@/pages/dashboard/Dashboard";
+import Dashboard from "@/pages/dashboard/dashboard";
 import ModeratorPage from "@/pages/moderator";
 import AdminPage from "@/pages/admin";
 import { AuthModal } from "@/components/auth-modal";
